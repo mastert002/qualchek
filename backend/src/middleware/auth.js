@@ -44,7 +44,10 @@ async function authenticate(req, res, next) {
       // The workspace itself can be suspended or its trial can lapse. Read it
       // here so every route gets the state without asking for it.
       const tenant = await db.prepare(
-        'SELECT id, name, slug, status, plan, trial_ends_at FROM tenants WHERE id = ?'
+        // max_users and plan_code belong here: the seat check reads them off
+        // req.tenant, and omitting them silently fell back to the smallest
+        // plan's cap - so a five-seat workspace was enforced as three.
+        'SELECT id, name, slug, status, plan, plan_code, max_users, trial_ends_at FROM tenants WHERE id = ?'
       ).get(decoded.tenant_id);
       if (!tenant) return res.status(401).json({ error: 'Workspace not found' });
 

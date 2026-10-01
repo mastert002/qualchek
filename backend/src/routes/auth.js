@@ -9,6 +9,7 @@ const { authenticate, signToken } = require('../middleware/auth');
 const { sendInvite, baseUrlFrom } = require('../lib/mailer');
 const audit = require('../lib/audit');
 const refresh = require('../lib/refresh');
+const { checkSeat, seatMessage } = require('../lib/seats');
 const { setSessionCookie, clearSessionCookie, readSessionCookie } = require('../lib/sessionCookie');
 
 const router = express.Router();
@@ -102,6 +103,15 @@ router.post('/register', authenticate, async (req, res) => {
     const db = getDb();
     const existing = await db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(email);
     if (existing) return res.status(409).json({ error: 'That email is already registered' });
+
+    // The seat cap is what the plan sells, so it has to hold here rather than
+    // only in the pricing page.
+    const seats = await checkSeat(db, req.tenant);
+    if (!seats.allowed) {
+      return res.status(403).json({
+        error: seatMessage(seats), seats_used: seats.used, seats_total: seats.cap, limit: 'users',
+      });
+    }
     const id = uuidv4();
     // No password supplied means "invite them". Store an unguessable random
     // secret so the account exists but cannot be signed into until the invite
@@ -145,6 +155,14 @@ router.put('/users/:id/active', authenticate, async (req, res) => {
     if (!active && target.role === 'admin') {
       const others = await db.prepare("SELECT COUNT(*) AS c FROM users WHERE role = 'admin' AND is_active = TRUE AND id != ?").get(req.params.id);
       if (Number(others.c) === 0) return res.status(400).json({ error: 'This is the last active admin. Promote another admin first.' });
+    }
+    if (active) {
+      const seats = await checkSeat(db, req.tenant);
+      if (!seats.allowed) {
+        return res.status(403).json({
+          error: seatMessage(seats), seats_used: seats.used, seats_total: seats.cap, limit: 'users',
+        });
+      }
     }
     await db.prepare('UPDATE users SET is_active = ? WHERE id = ?').run(active, req.params.id);
     // authenticate() already rejects a deactivated account on every request,
@@ -420,9 +438,12 @@ router.post('/logout', async (req, res) => {
 // trial days remain changes daily.
 router.get('/workspace', authenticate, async (req, res) => {
   const t = req.tenant || {};
+  const seats = await checkSeat(getDb(), t);
   res.json({
     id: t.id, name: t.name, slug: t.slug,
-    status: t.status, plan: t.plan, trial_ends_at: t.trial_ends_at,
+    status: t.status, plan: t.plan, plan_code: t.plan_code,
+    trial_ends_at: t.trial_ends_at,
+    seats_total: seats.cap, seats_used: seats.used,
   });
 });
 

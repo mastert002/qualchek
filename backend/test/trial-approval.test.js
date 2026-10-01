@@ -123,6 +123,47 @@ const PASSWORD = 'applicant-password-1';
     check(writeAfter.j && writeAfter.j.read_only === true,
       'the refusal tells the client it is read-only rather than broken');
 
+    // ---- the plan's seat cap actually holds --------------------------------
+    // The workspace was approved onto team5, so five people, and one exists.
+    await owner.query(`UPDATE tenants SET trial_ends_at = $1 WHERE id = $2`,
+      [new Date(Date.now() + 86400_000).toISOString(), approve.j.tenant_id]);  // un-expire
+
+    const ws = await api('GET', '/api/auth/workspace', { token: tok });
+    check(ws.j && ws.j.seats_total === 5 && ws.j.seats_used === 1,
+      `the workspace reports ${ws.j && ws.j.seats_used} of ${ws.j && ws.j.seats_total} seats used`);
+
+    // Fill the remaining four.
+    let created = 0;
+    for (let i = 2; i <= 5; i++) {
+      const r = await api('POST', '/api/auth/register', { token: tok, body: {
+        name: `Tester ${i}`, email: `t${i}-${stamp}@example.test`, role: 'tester',
+      }});
+      if (r.code === 200 || r.code === 201) created++;
+    }
+    check(created === 4, `four more people fit inside a five-seat plan (added ${created})`);
+
+    const sixth = await api('POST', '/api/auth/register', { token: tok, body: {
+      name: 'One too many', email: `t6-${stamp}@example.test`, role: 'tester',
+    }});
+    check(sixth.code === 403, `the sixth is refused on a five-seat plan (${sixth.code})`);
+    check(sixth.j && sixth.j.seats_total === 5 && sixth.j.seats_used === 5,
+      'the refusal says what the limit is and how much of it is used');
+    check(sixth.j && /larger plan|deactivate/i.test(sixth.j.error || ''),
+      'and says what to do about it');
+
+    // Deactivating frees a seat; reactivating must not slip past the cap.
+    const people = await owner.query(
+      `SELECT id FROM users WHERE tenant_id = $1 AND is_super_admin = FALSE LIMIT 1`, [approve.j.tenant_id]);
+    const victim = people.rows[0].id;
+    check((await api('PUT', `/api/auth/users/${victim}/active`, { token: tok, body: { active: false } })).code === 200,
+      'deactivating somebody frees their seat');
+    check((await api('POST', '/api/auth/register', { token: tok, body: {
+      name: 'Replacement', email: `t7-${stamp}@example.test`, role: 'tester' } })).code <= 201,
+      '...so a replacement fits');
+    const revive = await api('PUT', `/api/auth/users/${victim}/active`, { token: tok, body: { active: true } });
+    check(revive.code === 403,
+      `reactivating the original is refused - that would be six on a five-seat plan (${revive.code})`);
+
   } finally {
     if (madeTenants.length) await owner.query(`DELETE FROM tenants WHERE id = ANY($1)`, [madeTenants]);
     await owner.query(`DELETE FROM trial_requests WHERE LOWER(email) = $1`, [EMAIL]);

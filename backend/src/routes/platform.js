@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { getPool } = require('../db/database');
 const { JWT_SECRET } = require('../lib/secret');
+const { sendTrialDecision, baseUrlFrom } = require('../lib/mailer');
 
 const router = express.Router();
 
@@ -112,7 +113,19 @@ router.post('/requests/:id/approve', requirePlatform, async (req, res) => {
     await pool.query('SELECT approve_trial_request($1,$2,$3,$4,$5,$6)',
       [req.params.id, req.operator.id, tenantId, slug, 'usr_' + uuidv4(), trialEndsAt]);
 
-    res.json({ status: 'approved', tenant_id: tenantId, slug, trial_ends_at: trialEndsAt });
+    // Awaited rather than fired and forgotten, so the operator is told whether
+    // the applicant actually heard. It never throws: the workspace already
+    // exists by this point, and a mail outage must not turn a successful
+    // approval into an error the operator might retry.
+    const mail = await sendTrialDecision({
+      to: request.email, name: request.contact_name, workspace: request.workspace_name,
+      signInUrl: `${baseUrlFrom(req)}/login`, approved: true,
+    });
+
+    res.json({
+      status: 'approved', tenant_id: tenantId, slug, trial_ends_at: trialEndsAt,
+      email_delivered: mail.delivered, email_reason: mail.reason || null,
+    });
   } catch (err) {
     // The function raises when a request has already been decided, which is a
     // conflict rather than a server fault - two operators looking at the same
@@ -126,10 +139,25 @@ router.post('/requests/:id/approve', requirePlatform, async (req, res) => {
 router.post('/requests/:id/reject', requirePlatform, async (req, res) => {
   try {
     const reason = String(req.body.reason || '').trim() || null;
-    const { rows } = await getPool().query('SELECT reject_trial_request($1,$2,$3) AS ok',
+    const pool = getPool();
+
+    // Read the applicant before deciding: afterwards the row is no longer
+    // pending, and the message still has to be addressed to somebody.
+    const { rows: all } = await pool.query('SELECT * FROM list_trial_requests($1, $2)', [null, 500]);
+    const target = all.find(r => r.id === req.params.id);
+    if (!target) return res.status(404).json({ error: 'No request with that id' });
+
+    const { rows } = await pool.query('SELECT reject_trial_request($1,$2,$3) AS ok',
       [req.params.id, req.operator.id, reason]);
     if (!rows[0].ok) return res.status(409).json({ error: 'That request is no longer pending' });
-    res.json({ status: 'rejected' });
+
+    // The reason is recorded for the operator either way; repeating it to the
+    // applicant is a judgement, so it is only included when one was written.
+    const mail = await sendTrialDecision({
+      to: target.email, name: target.contact_name, workspace: target.workspace_name,
+      approved: false, reason,
+    });
+    res.json({ status: 'rejected', email_delivered: mail.delivered });
   } catch (err) {
     console.error('reject:', err);
     res.status(500).json({ error: 'Could not reject the request' });

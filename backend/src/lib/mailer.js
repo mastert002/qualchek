@@ -207,4 +207,81 @@ function baseUrlFrom(req) {
   return `${proto}://${host}`;
 }
 
-module.exports = { sendInvite, baseUrlFrom };
+
+// ---------------------------------------------------------------------------
+// Trial decisions
+// ---------------------------------------------------------------------------
+
+function decisionHtml({ name, workspace, signInUrl, approved, reason, appName }) {
+  const body = approved
+    ? `<p style="margin:0 0 12px;font-size:15px;line-height:1.55">Your workspace <strong>${escapeHtml(workspace)}</strong> is ready, and your 14-day trial has started.</p>
+       <p style="margin:0 0 20px;font-size:15px;line-height:1.55">Sign in with the email address and password you chose when you applied — there is nothing else to set up.</p>
+       <p style="margin:0 0 24px">
+         <a href="${signInUrl}" style="display:inline-block;background:#0d8a80;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:8px;font-size:15px;font-weight:600">Sign in to ${escapeHtml(appName)}</a>
+       </p>
+       <p style="margin:0;font-size:13px;color:#6b7280">If the button does not work, paste this into your browser:<br>
+         <span style="word-break:break-all;color:#374151">${signInUrl}</span></p>`
+    : `<p style="margin:0 0 12px;font-size:15px;line-height:1.55">Thank you for your interest in ${escapeHtml(appName)}. We are not able to set up a trial workspace for you at this time.</p>
+       ${reason ? `<p style="margin:0 0 12px;font-size:15px;line-height:1.55">${escapeHtml(reason)}</p>` : ''}
+       <p style="margin:0;font-size:13px;color:#6b7280">If you think this was a mistake, reply to this message and we will take another look.</p>`;
+
+  return `<!doctype html>
+<html><body style="margin:0;padding:24px;background:#f6f7f9;font-family:Segoe UI,Helvetica,Arial,sans-serif;color:#111827">
+  <table role="presentation" style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px">
+    <tr><td style="padding:28px">
+      <h1 style="margin:0 0 16px;font-size:20px;color:#0d8a80">${escapeHtml(appName)}</h1>
+      <p style="margin:0 0 12px;font-size:15px;line-height:1.55">Hi ${escapeHtml(name)},</p>
+      ${body}
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+function decisionText({ name, workspace, signInUrl, approved, reason, appName }) {
+  return approved
+    ? [`Hi ${name},`, '',
+       `Your workspace "${workspace}" is ready, and your 14-day trial has started.`, '',
+       'Sign in with the email address and password you chose when you applied:',
+       signInUrl, '', `— ${appName}`].join('\n')
+    : [`Hi ${name},`, '',
+       `Thank you for your interest in ${appName}. We are not able to set up a trial workspace for you at this time.`,
+       ...(reason ? ['', reason] : []),
+       '', 'If you think this was a mistake, reply to this message and we will take another look.',
+       '', `— ${appName}`].join('\n');
+}
+
+/**
+ * Tell an applicant what was decided.
+ *
+ * Never throws. An operator approving a request has already provisioned the
+ * workspace by the time this runs, and a mail outage must not turn a successful
+ * approval into an error - the applicant can still be told by hand.
+ */
+async function sendTrialDecision({ to, name, workspace, signInUrl, approved, reason, appName = 'QualChek' }) {
+  const subject = approved
+    ? `Your ${appName} workspace is ready`
+    : `About your ${appName} trial request`;
+  const html = decisionHtml({ name, workspace, signInUrl, approved, reason, appName });
+  const text = decisionText({ name, workspace, signInUrl, approved, reason, appName });
+
+  const useSmtp = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+  const useResend = !!process.env.RESEND_API_KEY;
+
+  if (!useSmtp && !useResend) {
+    console.log(`[mailer] no mail provider configured — ${approved ? 'approval' : 'decline'} for ${to} not sent`);
+    return { delivered: false, reason: 'not_configured' };
+  }
+  try {
+    if (useSmtp) await sendViaSmtp({ to, subject, html, text });
+    else await postJson(process.env.RESEND_API_KEY, {
+      from: process.env.MAIL_FROM || DEFAULT_FROM, to: [to], subject, text, html,
+    });
+    console.log(`[mailer] trial ${approved ? 'approval' : 'decline'} sent to ${to}`);
+    return { delivered: true };
+  } catch (err) {
+    console.error(`[mailer] trial decision to ${to} failed: ${err.message}`);
+    return { delivered: false, reason: err.message };
+  }
+}
+
+module.exports = { sendInvite, sendTrialDecision, baseUrlFrom };
