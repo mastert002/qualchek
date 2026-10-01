@@ -1,6 +1,8 @@
 ﻿const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { getDb, nowISO } = require('../db/database');
+const { getDb, getPool, nowISO } = require('../db/database');
+const { withTenant } = require('../db/tenantContext');
+const { enforceSubscription } = require('../middleware/subscription');
 
 const router = express.Router();
 
@@ -14,12 +16,45 @@ const wrap = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch
 async function ciAuth(req, res, next) {
   const key = req.headers['x-api-key'];
   if (!key) return res.status(401).json({ error: 'X-API-Key header required' });
-  const db = getDb();
-  const user = await db.prepare('SELECT id, name, email, role, is_active FROM users WHERE api_key = ?').get(key);
-  if (!user) return res.status(401).json({ error: 'Invalid API key' });
-  if (user.is_active === false) return res.status(401).json({ error: 'This account has been deactivated' });
-  req.user = user;
-  next();
+
+  // A pipeline presents only a key, so which workspace it belongs to is the
+  // thing being looked up - and `users` is policy-scoped. Querying it directly
+  // here finds nothing no matter how valid the key is, which is exactly how
+  // this broke: every CI call answered "Invalid API key".
+  const pool = getPool();
+  const { rows } = await pool.query('SELECT * FROM find_api_key($1)', [key]);
+  const found = rows[0];
+  if (!found) return res.status(401).json({ error: 'Invalid API key' });
+  if (found.is_active === false) return res.status(401).json({ error: 'This account has been deactivated' });
+  if (found.tenant_status === 'suspended') {
+    return res.status(403).json({ error: 'This workspace has been suspended.' });
+  }
+
+  // Everything downstream runs inside the key's workspace. Held until the
+  // response finishes rather than until next() returns: next() hands off to the
+  // route and comes straight back, and releasing the connection there would
+  // clear the tenant while the handler was still querying.
+  return await withTenant(pool, found.tenant_id, async () => {
+    const db = getDb();
+    const tenant = await db.prepare(
+      'SELECT id, name, slug, status, plan, plan_code, max_users, trial_ends_at FROM tenants WHERE id = ?'
+    ).get(found.tenant_id);
+
+    req.user = {
+      id: found.user_id, tenant_id: found.tenant_id, name: found.name,
+      email: found.email, role: found.role, is_active: found.is_active,
+    };
+    req.tenant = tenant;
+
+    return await new Promise((resolve, reject) => {
+      res.on('finish', resolve);
+      res.on('close', resolve);
+      // A lapsed trial makes a pipeline read-only too. Reporting results is a
+      // write, so CI fails loudly rather than appearing to pass while nothing
+      // is recorded.
+      try { enforceSubscription(req, res, next); } catch (err) { reject(err); }
+    });
+  });
 }
 
 router.use(wrap(ciAuth));
