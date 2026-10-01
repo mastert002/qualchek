@@ -2,9 +2,20 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const { currentClient } = require('./tenantContext');
 
+// Hosted Postgres (Supabase, RDS) requires TLS; a local server usually is not
+// built with it and rejects the attempt outright. Decided from the host rather
+// than hardcoded, so the same code runs in both places.
+function sslFor(url) {
+  try {
+    const host = new URL(url).hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return false;
+  } catch { /* fall through to the safe default */ }
+  return { rejectUnauthorized: false };
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: sslFor(process.env.DATABASE_URL),
   // A request now holds a client for its duration (see tenantContext.js), so
   // a server handling concurrent requests needs more than one. A serverless
   // instance still serves one request at a time, so it keeps the single
@@ -156,6 +167,17 @@ function getPool() {
 async function initDb() {
   _db = wrapDb(pool);
 
+  // DDL runs as the owner. The pool above belongs to the application role,
+  // which deliberately cannot create or alter anything - that is what makes it
+  // subject to the policies. Falling back to the same URL keeps a single-role
+  // setup working; assertIsolationActive() then says what that costs.
+  const ddlUrl = process.env.MIGRATION_DATABASE_URL || process.env.DATABASE_URL;
+  const ddl = new Pool({
+    connectionString: ddlUrl,
+    ssl: sslFor(ddlUrl),
+    max: 1,
+  });
+
   // Skip schema creation if tables already exist (faster cold starts on Vercel)
   // Retry here too: this is the first connection a cold instance makes, and it
   // is the query that was timing out against an idle Supabase.
@@ -163,13 +185,15 @@ async function initDb() {
   // auth.refresh_tokens) for GoTrue, which this app does not use. Without the
   // schema filter this check matches auth.users on a brand-new project and
   // skips creating every table the app actually needs.
-  const { rows: tableCheck } = await queryWithRetry(pool, `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users' LIMIT 1`);
+  const { rows: tableCheck } = await queryWithRetry(ddl, `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users' LIMIT 1`);
   if (tableCheck.length > 0) {
     console.log('DB: tables exist, skipping schema init');
+    await assertIsolationActive(pool);
+    await ddl.end();
     return _db;
   }
 
-  await pool.query(`
+  await ddl.query(`
     -- One customer. Everything else in this schema belongs to exactly one row
     -- here, and row-level security (below) is what keeps them apart.
     CREATE TABLE IF NOT EXISTS tenants (
@@ -446,7 +470,7 @@ async function initDb() {
   // this function can still write across tenants. That exemption is exactly
   // why the application connects as a different, non-owning role - and why
   // assertIsolationActive() below refuses to let that go unnoticed.
-  await pool.query(`
+  await ddl.query(`
     ALTER TABLE users ENABLE ROW LEVEL SECURITY;
     DROP POLICY IF EXISTS tenant_isolation ON users;
     CREATE POLICY tenant_isolation ON users
@@ -537,7 +561,7 @@ async function initDb() {
   // instead of handing the whole application a role that ignores RLS. Each
   // returns only what its caller needs, and neither takes a tenant from the
   // caller - they derive it.
-  await pool.query(`
+  await ddl.query(`
     CREATE OR REPLACE FUNCTION find_login(p_email TEXT)
     RETURNS TABLE (user_id TEXT, tenant_id TEXT, password_hash TEXT,
                    is_active BOOLEAN, tenant_status TEXT)
@@ -609,7 +633,7 @@ async function initDb() {
   // The application role may call them; it still cannot read the tables
   // directly across tenants.
   if (process.env.DB_APP_ROLE) {
-    await pool.query(`
+    await ddl.query(`
       GRANT EXECUTE ON FUNCTION find_login(TEXT) TO ${process.env.DB_APP_ROLE};
       GRANT EXECUTE ON FUNCTION find_refresh_tenant(TEXT) TO ${process.env.DB_APP_ROLE};
       GRANT EXECUTE ON FUNCTION email_in_use(TEXT) TO ${process.env.DB_APP_ROLE};
@@ -623,9 +647,14 @@ async function initDb() {
   // admin would belong to no tenant, so RLS would hide everything from it
   // anyway.
   await assertIsolationActive(pool);
+  await ddl.end();
 
   console.log('DB: schema created');
   return _db;
+}
+
+function nowISO() {
+  return new Date().toISOString();
 }
 
 module.exports = { getDb, getPool, initDb, nowISO };

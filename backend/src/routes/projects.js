@@ -64,6 +64,12 @@ router.get('/:id', async (req, res) => {
       if (!member) return res.status(404).json({ error: 'Project not found' });
     }
     const project = await db.prepare(`SELECT p.*, u.name as creator_name FROM projects p JOIN users u ON p.created_by = u.id WHERE p.id = ?`).get(req.params.id);
+    // Under row-level security a project belonging to another tenant is simply
+    // not visible, so this is undefined rather than throwing. Spreading it
+    // produced {} with a 200, which reads to the client as "an empty project
+    // exists". 404 is both correct and tells an outsider nothing about whether
+    // the id is real.
+    if (!project) return res.status(404).json({ error: 'Project not found' });
     const members = await db.prepare(`SELECT u.id, u.name, u.email, pm.role FROM project_members pm JOIN users u ON pm.user_id = u.id WHERE pm.project_id = ?`).all(req.params.id);
     res.json({ ...project, members });
   } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
