@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { getDb, getPool } = require('../db/database');
 const { withTenant } = require('../db/tenantContext');
+const { enforceSubscription } = require('./subscription');
 
 const { JWT_SECRET } = require('../lib/secret');
 
@@ -49,7 +50,29 @@ async function authenticate(req, res, next) {
 
       req.user = user;
       req.tenant = tenant;
-      return next();
+
+      // Hold the connection until the response is finished.
+      //
+      // next() hands control to the route handler and returns straight away -
+      // it does not wait for an async handler to finish. Resolving here would
+      // let withTenant's finally block release the client, and clear its
+      // app.tenant_id, while the handler was still running. The handler's
+      // first query would succeed and its second would fail against an empty
+      // tenant, which is precisely how this surfaced: a project was created
+      // and its membership row was then rejected by the foreign key.
+      return await new Promise((resolve, reject) => {
+        res.on('finish', resolve);
+        res.on('close', resolve);
+        try {
+          // Chained here rather than mounted on the app: app-level middleware
+          // runs before this, where req.tenant does not exist yet. Every
+          // authenticated route passes through authenticate, so a new router
+          // cannot skip the subscription check.
+          enforceSubscription(req, res, next);
+        } catch (err) {
+          reject(err);
+        }
+      });
     });
   } catch (err) {
     console.error('authenticate:', err);

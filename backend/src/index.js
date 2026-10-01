@@ -86,6 +86,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
   swaggerOptions: { persistAuthorization: true },
 }));
 
+app.use('/api/signup', require('./routes/signup'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/projects/:projectId/suites', require('./routes/suites'));

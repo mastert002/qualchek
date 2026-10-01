@@ -607,6 +607,19 @@ async function initDb() {
     $fn$;
     REVOKE ALL ON FUNCTION find_refresh_tenant(TEXT) FROM PUBLIC;
 
+    -- Whether a workspace handle is taken. Crosses tenants by nature: slugs are
+    -- unique across the install. Returns only a boolean, so it cannot be used
+    -- to enumerate who exists.
+    CREATE OR REPLACE FUNCTION slug_in_use(p_slug TEXT)
+    RETURNS BOOLEAN
+    LANGUAGE sql
+    SECURITY DEFINER
+    SET search_path = public
+    AS $fn$
+      SELECT EXISTS (SELECT 1 FROM tenants WHERE slug = p_slug);
+    $fn$;
+    REVOKE ALL ON FUNCTION slug_in_use(TEXT) FROM PUBLIC;
+
     -- Create a workspace and its first administrator in one statement, so a
     -- failure cannot leave a tenant with nobody able to sign in.
     CREATE OR REPLACE FUNCTION create_tenant(
@@ -637,6 +650,7 @@ async function initDb() {
       GRANT EXECUTE ON FUNCTION find_login(TEXT) TO ${process.env.DB_APP_ROLE};
       GRANT EXECUTE ON FUNCTION find_refresh_tenant(TEXT) TO ${process.env.DB_APP_ROLE};
       GRANT EXECUTE ON FUNCTION email_in_use(TEXT) TO ${process.env.DB_APP_ROLE};
+      GRANT EXECUTE ON FUNCTION slug_in_use(TEXT) TO ${process.env.DB_APP_ROLE};
       GRANT EXECUTE ON FUNCTION create_tenant(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO ${process.env.DB_APP_ROLE};
       GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${process.env.DB_APP_ROLE};
     `);

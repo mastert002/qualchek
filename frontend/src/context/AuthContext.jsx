@@ -57,6 +57,15 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  // Signup and login both receive the user with their token, so there is no
+  // reason to fetch it again. Exposed rather than duplicating the cache reset
+  // and idle-tracking reset at each call site.
+  const adoptSession = nextUser => {
+    resetCache();
+    clearIdleTracking();
+    setUser(nextUser);
+  };
+
   const logout = () => {
     // Ends the session server-side too, so the refresh cookie cannot be used
     // to mint new access tokens after signing out. Fire-and-forget: the local
@@ -70,7 +79,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, adoptSession }}>
       {children}
     </AuthContext.Provider>
   );

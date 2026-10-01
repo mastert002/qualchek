@@ -4,6 +4,7 @@ import { ToastProvider } from './context/ToastContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import SetPasswordPage from './pages/SetPasswordPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import AuditLogPage from './pages/AuditLogPage';
@@ -45,6 +46,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
           <Route path="/set-password" element={<SetPasswordPage />} />
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>

@@ -177,6 +177,13 @@ export default function LoginPage() {
             </button>
           </form>
 
+          <p className="mt-6 text-center text-[13.5px] text-slate-500">
+            New to QualChek?{' '}
+            <Link to="/signup" className="font-semibold text-brand-600 hover:text-brand-700">
+              Start a free trial
+            </Link>
+          </p>
+
           <p className="mt-8 flex items-start gap-2 text-[11.5px] leading-relaxed text-slate-400">
             <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
             <span>

@@ -415,6 +415,17 @@ router.post('/logout', async (req, res) => {
   res.json({ ok: true });
 });
 
+// The workspace's own subscription state. Separate from /me because the client
+// caches it on a different schedule - who you are changes rarely, how many
+// trial days remain changes daily.
+router.get('/workspace', authenticate, async (req, res) => {
+  const t = req.tenant || {};
+  res.json({
+    id: t.id, name: t.name, slug: t.slug,
+    status: t.status, plan: t.plan, trial_ends_at: t.trial_ends_at,
+  });
+});
+
 router.get('/me', authenticate, async (req, res) => {
   try {
     const db = getDb();
