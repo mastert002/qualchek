@@ -86,7 +86,10 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
   swaggerOptions: { persistAuthorization: true },
 }));
 
-app.use('/api/signup', require('./routes/signup'));
+// A workspace is requested, not self-served: these create a pending request
+// that an operator decides on from the platform console.
+app.use('/api/trial-request', require('./routes/trialRequest'));
+app.use('/api/platform', require('./routes/platform'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/projects/:projectId/suites', require('./routes/suites'));

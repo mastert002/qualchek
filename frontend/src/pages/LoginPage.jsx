@@ -179,8 +179,8 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-[13.5px] text-slate-500">
             New to QualChek?{' '}
-            <Link to="/signup" className="font-semibold text-brand-600 hover:text-brand-700">
-              Start a free trial
+            <Link to="/request-trial" className="font-semibold text-brand-600 hover:text-brand-700">
+              Request a free trial
             </Link>
           </p>
 
