@@ -14,6 +14,7 @@ import { IDLE_MINUTES } from '../hooks/useIdleLogout';
 const POINTS = [
   'Crawl any app and generate its test cases',
   'Record a session and turn clicks into steps',
+  'Automated runs reported straight from your pipeline',
   'Defects raised straight into Jira, with context',
 ];
 

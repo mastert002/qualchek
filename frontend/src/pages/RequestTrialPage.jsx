@@ -8,6 +8,7 @@ import PasswordInput from '../components/PasswordInput';
 const POINTS = [
   'Crawl any app and generate its test cases',
   'Record a session and turn clicks into steps',
+  'Automated runs reported straight from your pipeline',
   'Defects raised straight into Jira, with context',
 ];
 
@@ -77,7 +78,8 @@ export default function RequestTrialPage() {
           </h1>
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/50">
             Point QualChek at your application and it comes back with the test cases.
-            Tell us about your team and we&rsquo;ll set up your workspace.
+            Your pipeline pushes results back on every build, so one record covers
+            manual and automated runs alike.
           </p>
 
           <ul className="mt-8 space-y-3">
