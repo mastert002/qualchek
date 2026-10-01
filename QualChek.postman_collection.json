@@ -1,0 +1,452 @@
+{
+  "info": {
+    "name": "QualChek API",
+    "description": "Complete Postman collection for the QualChek REST API.\n\n## Quick Start\n1. Run **POST Login** to get a token — it is saved automatically to `{{token}}`\n2. All subsequent requests use `{{token}}` via the collection-level Authorization header\n3. After creating a project, copy its `id` into the `{{projectId}}` variable\n\n## Variables\n| Variable | Description |\n|---|---|\n| `baseUrl` | API base (default: http://localhost:3001/api) |\n| `token` | JWT — auto-set by the Login request |\n| `projectId` | Set after creating/listing a project |\n| `testCaseId` | Set after creating a test case |\n| `runId` | Set after creating a test run |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "qualchek-testmanager"
+  },
+  "variable": [
+    { "key": "baseUrl",    "value": "http://localhost:3001/api", "type": "string" },
+    { "key": "token",      "value": "", "type": "string" },
+    { "key": "projectId",  "value": "", "type": "string" },
+    { "key": "testCaseId", "value": "", "type": "string" },
+    { "key": "runId",      "value": "", "type": "string" },
+    { "key": "suiteId",    "value": "", "type": "string" },
+    { "key": "itemId",     "value": "", "type": "string" },
+    { "key": "userId",     "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth","register"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"tester\"\n}" },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const res = pm.response.json();",
+              "if (res.token) {",
+              "  pm.collectionVariables.set('token', res.token);",
+              "  console.log('Token saved to {{token}}');",
+              "}"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@testmanager.com\",\n  \"password\": \"admin123\"\n}" },
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Get Current User (me)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth","me"] }
+          }
+        },
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/auth/users", "host": ["{{baseUrl}}"], "path": ["auth","users"] }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["auth","users","{{userId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\",\n  \"role\": \"tester\"\n}" }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/auth/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["auth","users","{{userId}}"] }
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
+            "auth": { "type": "noauth" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Projects",
+      "item": [
+        {
+          "name": "List Projects",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const res = pm.response.json();",
+              "if (Array.isArray(res) && res.length > 0) {",
+              "  pm.collectionVariables.set('projectId', res[0].id);",
+              "  console.log('projectId set to', res[0].id);",
+              "}"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] }
+          }
+        },
+        {
+          "name": "Create Project",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const res = pm.response.json();",
+              "if (res.id) pm.collectionVariables.set('projectId', res.id);"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"E-Commerce Platform Tests\",\n  \"description\": \"End-to-end tests for checkout and payment\"\n}" }
+          }
+        },
+        {
+          "name": "Get Project",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"E-Commerce Tests v2\",\n  \"description\": \"Updated description\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}"] }
+          }
+        },
+        {
+          "name": "Add Member",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/members", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","members"] },
+            "body": { "mode": "raw", "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"role\": \"tester\"\n}" }
+          }
+        },
+        {
+          "name": "Remove Member",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/members/{{userId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","members","{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🗂️ Test Suites",
+      "item": [
+        {
+          "name": "List Suites",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/suites", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","suites"] }
+          }
+        },
+        {
+          "name": "Create Suite",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["const r = pm.response.json(); if (r.id) pm.collectionVariables.set('suiteId', r.id);"], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/suites", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","suites"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Smoke Tests\",\n  \"description\": \"Critical path smoke tests\"\n}" }
+          }
+        },
+        {
+          "name": "Update Suite",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/suites/{{suiteId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","suites","{{suiteId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Smoke Tests — Updated\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Suite",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/suites/{{suiteId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","suites","{{suiteId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 Test Cases",
+      "item": [
+        {
+          "name": "List Test Cases",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{projectId}}/test-cases",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects","{{projectId}}","test-cases"],
+              "query": [
+                { "key": "priority", "value": "", "disabled": true },
+                { "key": "status",   "value": "", "disabled": true },
+                { "key": "suite_id", "value": "", "disabled": true },
+                { "key": "search",   "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Test Case",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["const r = pm.response.json(); if (r.id) pm.collectionVariables.set('testCaseId', r.id);"], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/test-cases", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","test-cases"] },
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Verify successful user login\",\n  \"description\": \"Test that a registered user can log in with valid credentials\",\n  \"preconditions\": \"User must already be registered in the system\",\n  \"suite_id\": \"{{suiteId}}\",\n  \"priority\": \"high\",\n  \"expected_result\": \"User is redirected to the dashboard\",\n  \"steps\": [\n    { \"action\": \"Navigate to login page\", \"expected\": \"Login form is visible\" },\n    { \"action\": \"Enter valid email and password\", \"expected\": \"Fields are populated\" },\n    { \"action\": \"Click Sign In button\", \"expected\": \"User is redirected to dashboard\" }\n  ],\n  \"tags\": [\"smoke\", \"login\", \"regression\"]\n}" }
+          }
+        },
+        {
+          "name": "Get Test Case",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/test-cases/{{testCaseId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","test-cases","{{testCaseId}}"] }
+          }
+        },
+        {
+          "name": "Update Test Case",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/test-cases/{{testCaseId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","test-cases","{{testCaseId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"priority\": \"critical\",\n  \"status\": \"active\",\n  \"tags\": [\"smoke\", \"login\", \"critical-path\"]\n}" }
+          }
+        },
+        {
+          "name": "Delete Test Case",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/test-cases/{{testCaseId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","test-cases","{{testCaseId}}"] }
+          }
+        },
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/test-cases/{{testCaseId}}/comments", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","test-cases","{{testCaseId}}","comments"] },
+            "body": { "mode": "raw", "raw": "{\n  \"content\": \"This fails on Edge v120 — see attached screenshot.\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "▶️ Test Runs",
+      "item": [
+        {
+          "name": "List Test Runs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/runs", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","runs"] }
+          }
+        },
+        {
+          "name": "Create Test Run",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": ["const r = pm.response.json(); if (r.id) pm.collectionVariables.set('runId', r.id);"], "type": "text/javascript" }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/runs", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","runs"] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Sprint 12 Regression Run\",\n  \"description\": \"Full regression for Sprint 12 release\",\n  \"test_case_ids\": [\"{{testCaseId}}\"]\n}" }
+          }
+        },
+        {
+          "name": "Get Test Run",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/runs/{{runId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","runs","{{runId}}"] }
+          }
+        },
+        {
+          "name": "Update Test Run",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/runs/{{runId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","runs","{{runId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"in_progress\"\n}" }
+          }
+        },
+        {
+          "name": "Execute Test Case (Record Result)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/runs/{{runId}}/items/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","runs","{{runId}}","items","{{itemId}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"passed\",\n  \"notes\": \"Passed on Chrome 121 and Firefox 122\",\n  \"duration\": 45\n}" }
+          }
+        },
+        {
+          "name": "Add Cases to Existing Run",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/runs/{{runId}}/add-cases", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","runs","{{runId}}","add-cases"] },
+            "body": { "mode": "raw", "raw": "{\n  \"test_case_ids\": [\"{{testCaseId}}\"]\n}" }
+          }
+        },
+        {
+          "name": "Delete Test Run",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/runs/{{runId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","runs","{{runId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Reports",
+      "item": [
+        {
+          "name": "Project Summary Report",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/reports/summary", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","reports","summary"] }
+          }
+        },
+        {
+          "name": "Test Run Detail Report",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/{{projectId}}/reports/run/{{runId}}", "host": ["{{baseUrl}}"], "path": ["projects","{{projectId}}","reports","run","{{runId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔗 Jira Integration",
+      "item": [
+        {
+          "name": "Get Jira Config",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/jira/config", "host": ["{{baseUrl}}"], "path": ["jira","config"] }
+          }
+        },
+        {
+          "name": "Save Jira Config",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/jira/config", "host": ["{{baseUrl}}"], "path": ["jira","config"] },
+            "body": { "mode": "raw", "raw": "{\n  \"base_url\": \"https://mycompany.atlassian.net\",\n  \"email\": \"admin@mycompany.com\",\n  \"api_token\": \"ATATT3xFfGF0...\",\n  \"default_project\": \"PROJ\"\n}" }
+          }
+        },
+        {
+          "name": "Test Jira Connection",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/jira/config/test", "host": ["{{baseUrl}}"], "path": ["jira","config","test"] },
+            "body": { "mode": "raw", "raw": "{\n  \"base_url\": \"https://mycompany.atlassian.net\",\n  \"email\": \"admin@mycompany.com\",\n  \"api_token\": \"ATATT3xFfGF0...\"\n}" }
+          }
+        },
+        {
+          "name": "Get Jira Issue",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/jira/issue/PROJ-123", "host": ["{{baseUrl}}"], "path": ["jira","issue","PROJ-123"] }
+          }
+        },
+        {
+          "name": "Create Jira Issue",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/jira/issue", "host": ["{{baseUrl}}"], "path": ["jira","issue"] },
+            "body": { "mode": "raw", "raw": "{\n  \"summary\": \"[Test Failure] Login page crashes on mobile\",\n  \"description\": \"The login button is unresponsive on iOS Safari 16\",\n  \"project_key\": \"PROJ\",\n  \"issue_type\": \"Bug\",\n  \"priority\": \"High\",\n  \"test_case_id\": \"{{testCaseId}}\"\n}" }
+          }
+        },
+        {
+          "name": "Link Test Case to Jira Issue",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/jira/link/test-case", "host": ["{{baseUrl}}"], "path": ["jira","link","test-case"] },
+            "body": { "mode": "raw", "raw": "{\n  \"test_case_id\": \"{{testCaseId}}\",\n  \"issue_key\": \"PROJ-123\"\n}" }
+          }
+        },
+        {
+          "name": "Get Test Case Jira Link",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/jira/link/test-case/{{testCaseId}}", "host": ["{{baseUrl}}"], "path": ["jira","link","test-case","{{testCaseId}}"] }
+          }
+        },
+        {
+          "name": "Unlink Test Case from Jira",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/jira/link/test-case/{{testCaseId}}", "host": ["{{baseUrl}}"], "path": ["jira","link","test-case","{{testCaseId}}"] }
+          }
+        },
+        {
+          "name": "Post Run Results as Jira Comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/jira/comment/PROJ-123", "host": ["{{baseUrl}}"], "path": ["jira","comment","PROJ-123"] },
+            "body": { "mode": "raw", "raw": "{\n  \"run_id\": \"{{runId}}\"\n}" }
+          }
+        },
+        {
+          "name": "List Jira Projects",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/jira/projects", "host": ["{{baseUrl}}"], "path": ["jira","projects"] }
+          }
+        }
+      ]
+    }
+  ]
+}

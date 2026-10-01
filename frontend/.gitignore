@@ -1,0 +1,27 @@
+# Environment variables — never commit these
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Dependencies
+node_modules/
+
+# Build output
+# dist/ is deliberately tracked: vercel.json's legacy "builds" array makes
+# Vercel skip the Build Command, so a Git-triggered deployment ships whatever
+# dist is committed. See the note in the root .gitignore.
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

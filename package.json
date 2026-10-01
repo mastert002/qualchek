@@ -1,0 +1,9 @@
+{
+  "name": "qualchek",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "node backend/src/index.js"
+  },
+  "description": "QualChek - crawls your application and writes its test cases."
+}

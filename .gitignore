@@ -1,0 +1,71 @@
+# Environment variables — never commit these
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+backend/.env
+frontend/.env
+
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build output
+# frontend/dist is deliberately NOT ignored. vercel.json uses the legacy
+# "builds" array, which makes Vercel skip the project Build Command entirely,
+# so the deployed site is whatever dist the deployment carries. A Git-triggered
+# deployment can only carry it if it is committed - ignoring it made every push
+# publish a backend with no frontend, answering "Cannot GET /".
+frontend/build/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
+
+# SQL dumps and import scripts — may contain secrets.
+# Anchored to the specific scripts: a bare *import*.js also matched
+# backend/src/routes/import.js, which index.js requires at startup —
+# excluding it crashes the whole server with MODULE_NOT_FOUND.
+*.sql
+/import_direct.js
+/backend/import_direct.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+backend/.env
+
+.vercel
+.env*
+
+.vercel
+.env*
+
+# Walkthrough media — kept on disk, too large for git.
+# The MP4 is over 100 MB, past GitHub's hard limit for a normal file, and LFS
+# was tried and reversed, so these stay out of the repository entirely.
+*.mp4
+*.pptx
+# Word/Office lock files (the "~$" prefix), never wanted in a repo
+~$*
+
+
+
+# Exceptions to the broad .env* and *.sql rules above.
+# The template carries no values, and the setup script is how a new environment
+# gets its database and its two roles - both need to ship.
+!.env.example
+!backend/.env.example
+!backend/migrations/*.sql

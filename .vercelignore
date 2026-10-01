@@ -1,0 +1,14 @@
+# Documentation and media are not part of the deployed application, and the
+# walkthrough video is past Vercel's 100 MB per-file upload limit, which fails
+# the whole deployment. Keep them out of the upload entirely.
+*.mp4
+*.pptx
+*.docx
+*.pdf
+screenshots/
+QualChek.postman_collection.json
+
+# Local-only
+backend/testmanager.db
+start.ps1
+.claude/
