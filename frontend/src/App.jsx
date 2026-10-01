@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import Layout from './components/Layout';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RequestTrialPage from './pages/RequestTrialPage';
 import PlatformConsole from './pages/PlatformConsole';
@@ -46,14 +47,14 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/request-trial" element={<PublicRoute><RequestTrialPage /></PublicRoute>} />
           <Route path="/signup" element={<Navigate to="/request-trial" replace />} />
           <Route path="/platform" element={<PlatformConsole />} />
           <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
           <Route path="/set-password" element={<SetPasswordPage />} />
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route index element={<Navigate to="/projects" replace />} />
+          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="projects" element={<ProjectsPage />} />
             <Route path="projects/:projectId" element={<ProjectDashboard />} />
             <Route path="projects/:projectId/test-cases" element={<TestCasesPage />} />
