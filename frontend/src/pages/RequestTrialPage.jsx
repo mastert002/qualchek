@@ -6,8 +6,10 @@ import QCLogo from '../components/QCLogo';
 import PasswordInput from '../components/PasswordInput';
 
 const POINTS = [
+  'Bring your existing cases in from Excel',
   'Crawl any app and generate its test cases',
   'Record a session and turn clicks into steps',
+  'Export Playwright, Cypress or Pytest scripts',
   'Automated runs reported straight from your pipeline',
   'Defects raised straight into Jira, with context',
 ];

@@ -180,8 +180,100 @@ function PipelineVisual() {
   );
 }
 
+
+function ExcelVisual() {
+  return (
+    <svg viewBox="0 0 340 190" role="img" className="w-full" fill="none"
+         aria-label="Rows from a spreadsheet become test cases, with the columns matched automatically.">
+      {/* the sheet */}
+      <rect x="1" y="26" width="162" height="140" rx="10" stroke="currentColor" strokeOpacity="0.16" />
+      <rect x="1" y="26" width="162" height="22" rx="10" fill="currentColor" fillOpacity="0.05" />
+      <text x="14" y="41" fontSize="9" fill="currentColor" fillOpacity="0.5" fontFamily="ui-monospace, monospace">cases.xlsx</text>
+      {/* header row */}
+      <line x1="1" y1="62" x2="163" y2="62" stroke="currentColor" strokeOpacity="0.14" />
+      {[14, 68, 112].map((x, i) => (
+        <rect key={i} x={x} y={53} width={i === 0 ? 44 : 34} height="5" rx="2.5" fill="#38c2b2" fillOpacity="0.55" />
+      ))}
+      {/* data rows */}
+      {[0, 1, 2, 3].map(r => (
+        <g key={r}>
+          <line x1="1" y1={62 + (r + 1) * 24} x2="163" y2={62 + (r + 1) * 24} stroke="currentColor" strokeOpacity="0.08" />
+          {[14, 68, 112].map((x, i) => (
+            <rect key={i} x={x} y={72 + r * 24} width={(i === 0 ? 46 : 32) - (r % 2) * 8} height="5"
+                  rx="2.5" fill="currentColor" fillOpacity="0.26" />
+          ))}
+        </g>
+      ))}
+      <line x1="60" y1="26" x2="60" y2="166" stroke="currentColor" strokeOpacity="0.1" />
+      <line x1="106" y1="26" x2="106" y2="166" stroke="currentColor" strokeOpacity="0.1" />
+
+      <path d="M 172 96 L 202 96" stroke="#38c2b2" strokeWidth="1.6" markerEnd="url(#hv-a)" />
+      <text x="187" y="86" textAnchor="middle" fontSize="8.5" fill="#38c2b2">mapped</text>
+
+      {/* resulting cases */}
+      {[0, 1, 2].map(i => (
+        <g key={i}>
+          <rect x="210" y={40 + i * 40} width="128" height="32" rx="8"
+                fill="#38c2b2" fillOpacity="0.07" stroke="#38c2b2" strokeOpacity="0.26" />
+          <circle cx="226" cy={56 + i * 40} r="6" fill="none" stroke="#38c2b2" strokeWidth="1.3" />
+          <path d={`M 223 ${56 + i * 40} l 2 2 l 4 -4.5`} stroke="#38c2b2" strokeWidth="1.5"
+                fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="240" y={50 + i * 40} width={82 - i * 16} height="5" rx="2.5" fill="currentColor" fillOpacity="0.4" />
+          <rect x="240" y={60 + i * 40} width={58 - i * 10} height="4.5" rx="2.25" fill="currentColor" fillOpacity="0.16" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function ScriptVisual() {
+  return (
+    <svg viewBox="0 0 340 190" role="img" className="w-full" fill="none"
+         aria-label="A written test case is exported as a Playwright, Cypress or Pytest script.">
+      {/* the case */}
+      <rect x="1" y="34" width="134" height="122" rx="10" stroke="currentColor" strokeOpacity="0.16" />
+      <text x="16" y="54" fontSize="9" letterSpacing="0.8" fill="currentColor" fillOpacity="0.45">TEST CASE</text>
+      {[0, 1, 2, 3].map(i => (
+        <g key={i}>
+          <text x="16" y={78 + i * 20} fontSize="9" fill="#38c2b2">{i + 1}</text>
+          <rect x="28" y={73 + i * 20} width={92 - (i % 3) * 16} height="5" rx="2.5" fill="currentColor" fillOpacity="0.3" />
+        </g>
+      ))}
+
+      <path d="M 143 96 L 173 96" stroke="#38c2b2" strokeWidth="1.6" markerEnd="url(#hv-a)" />
+
+      {/* the generated file */}
+      <rect x="181" y="24" width="158" height="142" rx="10" fill="#0a1420" stroke="#38c2b2" strokeOpacity="0.22" />
+      <circle cx="196" cy="40" r="2.5" fill="#ffffff" fillOpacity="0.2" />
+      <circle cx="205" cy="40" r="2.5" fill="#ffffff" fillOpacity="0.2" />
+      <circle cx="214" cy="40" r="2.5" fill="#ffffff" fillOpacity="0.2" />
+      <text x="226" y="43" fontSize="8" fill="#ffffff" fillOpacity="0.35" fontFamily="ui-monospace, monospace">login.spec.ts</text>
+      {[['#4f46e5', 56, 'test', 26], ['#ffffff', 56, null, 0]].slice(0, 1).map(() => null)}
+      {[0, 1, 2, 3, 4, 5].map(i => (
+        <g key={i}>
+          <rect x="194" y={60 + i * 16} width={i % 3 === 0 ? 22 : 14} height="4.5" rx="2.25"
+                fill="#4f46e5" fillOpacity="0.75" />
+          <rect x={i % 2 ? 230 : 222} y={60 + i * 16} width={88 - (i % 4) * 16} height="4.5" rx="2.25"
+                fill="#ffffff" fillOpacity="0.3" />
+        </g>
+      ))}
+      <text x="260" y="154" textAnchor="middle" fontSize="8" fill="#38c2b2">Playwright · Cypress · Pytest</text>
+    </svg>
+  );
+}
+
 /* ------------------------------------------------------------- sections -- */
 const FEATURES = [
+  {
+    eyebrow: 'Bring what you have',
+    title: 'Your existing cases, in minutes.',
+    body: 'Most teams already have a spreadsheet somewhere. Upload it and QualChek matches '
+        + 'your columns to its fields by itself - a sheet headed "Test Case / Steps / Expected" '
+        + 'needs no configuring. You see exactly what will be created before anything is written.',
+    points: ['Reads .xlsx, .xls and .csv', 'Columns matched automatically, corrected with a dropdown',
+             'One bad row is reported by its line number, not fatal'],
+    visual: ExcelVisual,
+  },
   {
     eyebrow: 'The crawler',
     title: 'Give it a URL. Get back test cases.',
@@ -202,6 +294,16 @@ const FEATURES = [
     visual: RecordVisual,
   },
   {
+    eyebrow: 'Automation',
+    title: 'Turn a test case into code.',
+    body: 'Select the cases you want automated and export them as a runnable suite. The steps '
+        + 'you already wrote become the body of the test, so automating a case starts from '
+        + 'something real rather than an empty file.',
+    points: ['Playwright, Cypress or Pytest', 'Steps and expected results carried into the code',
+             'Run it, and the results report back against the same cases'],
+    visual: ScriptVisual,
+  },
+  {
     eyebrow: 'CI and Jira',
     title: 'One record for people and pipelines.',
     body: 'Your build reports results against the same test cases your manual runs use, so there is '
@@ -217,6 +319,8 @@ const COMPARE = [
   ['Writes your test cases for you', true, false],
   ['Generates cases from a live URL', true, false],
   ['Turns a recorded session into steps', true, false],
+  ['Import existing cases from a spreadsheet', true, true],
+  ['Export runnable Playwright, Cypress or Pytest', true, true],
   ['Manual test runs and results', true, true],
   ['CI reporting from your pipeline', true, true],
   ['Jira issues and two-way comments', true, true],
@@ -590,7 +694,8 @@ export default function LandingPage() {
                 <p className="mt-2 text-[13.5px] text-slate-500">Up to {p.max_users} people</p>
 
                 <ul className="mt-6 space-y-2.5 border-t border-slate-100 pt-6">
-                  {['The crawler and session recording', 'Unlimited projects and test cases',
+                  {['The crawler and session recording', 'Excel import and script export',
+                    'Unlimited projects and test cases',
                     'CI/CD workflow integration — any pipeline',
                     'Jira issues, with comments both ways',
                     'Every feature — tiers differ only by size'].map(f => (
