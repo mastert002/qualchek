@@ -19,7 +19,7 @@ const money = p => `$${(p.price_monthly_cents / 100).toFixed(0)}`;
 /* ------------------------------------------------------------------ nav -- */
 function Nav() {
   const [open, setOpen] = useState(false);
-  const links = [['#why', 'Why QualChek'], ['#features', 'Features'], ['#compare', 'Compare'], ['#pricing', 'Pricing']];
+  const links = [['#features', 'Features'], ['#pipeline', 'CI/CD'], ['#compare', 'Compare'], ['#pricing', 'Pricing']];
   return (
     <header className="sticky z-50 border-b border-white/[0.08] bg-[#0a1420]/80 backdrop-blur-xl"
             style={{ top: 'env(safe-area-inset-top, 0px)' }}>
@@ -260,6 +260,84 @@ function FaqItem({ q, a }) {
   );
 }
 
+
+/* ---------------------------------------------------------- CI workflow -- */
+// The real endpoints, not an illustrative sketch: a reader should be able to
+// copy this, change three values and have it work.
+const WORKFLOW = `name: Tests → QualChek
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      QC_URL: https://app.qualchek.com/api
+      QC_KEY: \${{ secrets.QUALCHEK_API_KEY }}
+      QC_PROJECT: prj_1a2b3c
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+
+      # 1 — open a run in QualChek
+      - id: run
+        run: |
+          echo "id=$(curl -s -X POST \
+            "$QC_URL/ci/projects/$QC_PROJECT/runs" \
+            -H "X-API-Key: $QC_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"Build #\${{ github.run_number }}"}' \
+            | jq -r .id)" >> $GITHUB_OUTPUT
+
+      # 2 — run your suite. A failing test must not stop the report
+      - run: npx playwright test --reporter=json > out.json
+        continue-on-error: true
+
+      # 3 — report results, then close the run
+      - run: |
+          curl -s -X POST "$QC_URL/ci/runs/\${{ steps.run.outputs.id }}/results" \
+            -H "X-API-Key: $QC_KEY" -H "Content-Type: application/json" \
+            --data @payload.json
+
+          curl -s -X POST "$QC_URL/ci/runs/\${{ steps.run.outputs.id }}/complete" \
+            -H "X-API-Key: $QC_KEY"`;
+
+const EXCHANGE = [
+  ['Open a run', 'POST /ci/projects/{id}/runs',
+   'Your build tells QualChek a run is starting and gets an id back. Name it after the build so a result can always be traced to the commit that produced it.'],
+  ['Push results', 'POST /ci/runs/{id}/results',
+   'Send each test name and whether it passed. Matched to your test cases by title, so there are no QualChek ids to wire into your suite.'],
+  ['Close it', 'POST /ci/runs/{id}/complete',
+   'Anything the pipeline never reported is marked skipped rather than quietly left out — so the run says what was not covered, not just what failed.'],
+];
+
+/** Light YAML colouring: enough to read, without pulling in a highlighter. */
+function Yaml({ source }) {
+  return (
+    <pre className="overflow-x-auto px-5 py-4 font-mono text-[12px] leading-[1.75] text-white/80">
+      <code>
+        {source.split('\n').map((line, i) => {
+          if (/^\s*#/.test(line)) {
+            return <div key={i} className="text-brand-400/70">{line || ' '}</div>;
+          }
+          const m = line.match(/^(\s*-?\s*)([A-Za-z0-9_.-]+)(:)(.*)$/);
+          if (m) {
+            return (
+              <div key={i}>
+                <span className="text-white/35">{m[1]}</span>
+                <span className="text-indigo2-500">{m[2]}</span>
+                <span className="text-white/35">{m[3]}</span>
+                <span className="text-white/75">{m[4]}</span>
+              </div>
+            );
+          }
+          return <div key={i} className="text-white/60">{line || ' '}</div>;
+        })}
+      </code>
+    </pre>
+  );
+}
+
 /* ----------------------------------------------------------------- page -- */
 export default function LandingPage() {
   const [plans, setPlans] = useState(FALLBACK_PLANS);
@@ -386,6 +464,59 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+
+      {/* ------------------------------------------------- ci workflow ---- */}
+      <section id="pipeline" className="border-t border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
+          <div className="max-w-2xl">
+            <p className="font-display text-[11.5px] font-bold uppercase tracking-[0.16em] text-brand-600">
+              Test run automation
+            </p>
+            <h2 className="mt-3 font-display text-[1.9rem] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 text-balance sm:text-[2.3rem]">
+              Three calls, and your pipeline reports in
+            </h2>
+            <p className="mt-4 text-[15.5px] leading-relaxed text-slate-600">
+              No plugin, no agent, no SDK to keep up to date — QualChek takes results over
+              HTTP, so whatever your suite is written in can report into it. Here it is in a
+              GitHub Actions workflow; GitLab, Jenkins and Azure Pipelines are the same three
+              calls.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
+            <ol className="space-y-7">
+              {EXCHANGE.map(([title, endpoint, body], i) => (
+                <li key={title} className="relative pl-11">
+                  <span className="absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 font-display text-[12.5px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <h3 className="font-display text-[16.5px] font-bold text-slate-900">{title}</h3>
+                  <code className="mt-1.5 block font-mono text-[11.5px] text-brand-700">{endpoint}</code>
+                  <p className="mt-2 text-[14px] leading-relaxed text-slate-600">{body}</p>
+                </li>
+              ))}
+              <li className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-[13px] leading-relaxed text-slate-500">
+                <span className="font-semibold text-slate-700">The key is scoped to one workspace.</span>{' '}
+                It cannot read or write another customer&rsquo;s projects, and a lapsed trial
+                makes reporting fail loudly rather than appear to succeed while nothing is recorded.
+              </li>
+            </ol>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-800 bg-[#0a1420] shadow-[0_20px_60px_-30px_rgba(10,20,32,0.8)]">
+              <div className="flex items-center gap-2 border-b border-white/[0.08] px-5 py-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                <span className="ml-2 font-mono text-[11.5px] text-white/35">
+                  .github/workflows/qualchek.yml
+                </span>
+              </div>
+              <Yaml source={WORKFLOW} />
+            </div>
+          </div>
         </div>
       </section>
 
