@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Check, X, Clock, Building2, Mail, Phone, LogOut, AlertTriangle } from 'lucide-react';
+import { Check, X, Clock, Building2, Mail, Phone, LogOut, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import QCLogo from '../components/QCLogo';
 import PasswordInput from '../components/PasswordInput';
@@ -210,8 +210,7 @@ export default function PlatformConsole() {
 
   const onDecided = outcome => {
     load();
-    if (outcome && outcome.email_delivered === false) setNotice(outcome);
-    else setNotice(null);
+    setNotice(outcome || null);
   };
 
   if (checking) return <div className="min-h-screen bg-slate-50" />;
@@ -252,26 +251,50 @@ export default function PlatformConsole() {
           Approving provisions the workspace, its first admin, and a 14-day trial.
         </p>
 
-        {notice && (
-          <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-warn-500/30 bg-warn-50 px-4 py-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warn-500" />
-            <div className="text-[13.5px] leading-relaxed">
-              <p className="font-semibold text-warn-500">
-                {notice.what === 'approve' ? 'Workspace created, but no email was sent' : 'Declined, but no email was sent'}
-              </p>
-              <p className="mt-0.5 text-ink-600">
-                {notice.email_reason === 'not_configured'
-                  ? 'No mail provider is configured on this deployment, so nothing was delivered.'
-                  : `Sending failed: ${notice.email_reason || 'unknown reason'}.`}{' '}
-                Tell <span className="font-semibold">{notice.email}</span> by hand
-                {notice.what === 'approve' ? ' — they can sign in now with the password they chose.' : '.'}
-              </p>
+        {notice && (() => {
+          const approved = notice.what === 'approve';
+          const mailed = notice.email_delivered !== false;
+          // Green only when the decision stuck AND the applicant was told.
+          // Anything the operator still has to follow up by hand is amber, so
+          // "done" and "done, but" never look alike at a glance.
+          const tone = mailed
+            ? 'border-pass-500/30 bg-pass-50 text-pass-500'
+            : 'border-warn-500/30 bg-warn-50 text-warn-500';
+          const Icon = mailed ? CheckCircle2 : AlertTriangle;
+          return (
+            <div className={`mt-5 flex items-start gap-2.5 rounded-xl border px-4 py-3 ${tone}`}>
+              <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <div className="text-[13.5px] leading-relaxed">
+                <p className="font-semibold">
+                  {approved
+                    ? (mailed ? 'Approved — workspace created' : 'Workspace created, but no email was sent')
+                    : (mailed ? 'Request declined' : 'Declined, but no email was sent')}
+                </p>
+                <p className="mt-0.5 text-ink-600">
+                  {mailed ? (
+                    <>
+                      <span className="font-semibold">{notice.email}</span> has been emailed
+                      {approved && notice.slug ? <> — their workspace is <span className="font-semibold">{notice.slug}</span>, and a 14-day trial has started.</> : '.'}
+                    </>
+                  ) : (
+                    <>
+                      {notice.email_reason === 'not_configured'
+                        ? 'No mail provider is configured on this deployment, so nothing was delivered.'
+                        : notice.email_reason === 'unroutable_address'
+                        ? 'That address is on a reserved domain that cannot receive mail, so nothing was sent.'
+                        : `Sending failed: ${notice.email_reason || 'unknown reason'}.`}{' '}
+                      Tell <span className="font-semibold">{notice.email}</span> by hand
+                      {approved ? ' — they can sign in now with the password they chose.' : '.'}
+                    </>
+                  )}
+                </p>
+              </div>
+              <button onClick={() => setNotice(null)} className="ml-auto opacity-60 hover:opacity-100">
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <button onClick={() => setNotice(null)} className="ml-auto text-ink-400 hover:text-ink-600">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="mt-5 flex gap-1.5">
           {tabs.map(([key, label, n]) => (

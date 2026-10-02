@@ -157,7 +157,7 @@ router.post('/requests/:id/reject', requirePlatform, async (req, res) => {
       to: target.email, name: target.contact_name, workspace: target.workspace_name,
       approved: false, reason,
     });
-    res.json({ status: 'rejected', email_delivered: mail.delivered });
+    res.json({ status: 'rejected', email_delivered: mail.delivered, email_reason: mail.reason || null });
   } catch (err) {
     console.error('reject:', err);
     res.status(500).json({ error: 'Could not reject the request' });

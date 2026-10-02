@@ -164,7 +164,24 @@ async function sendViaSmtp({ to, subject, html, text }) {
   });
 }
 
+
+// Addresses that can never receive mail.
+//
+// RFC 2606 and RFC 6761 reserve these for documentation and testing, so no MX
+// record will ever exist for them. Handing one to a provider does not fail
+// fast: the message is accepted and bounces back minutes later, so a test run
+// quietly fills a real inbox with delivery failures. Refusing up front is also
+// the right answer for a typo in production - "@gmial.test" is not mail worth
+// attempting.
+const UNROUTABLE = /@(?:[^@]*\.)?(?:test|example|invalid|localhost)$|@example\.(?:com|net|org)$/i;
+
+const isUnroutable = address => UNROUTABLE.test(String(address || '').trim());
+
 async function sendInvite({ to, name, link, appName = 'QualChek', expiresInMinutes = 60, mode = 'invite' }) {
+  if (isUnroutable(to)) {
+    console.log(`[mailer] ${to} is a reserved address that cannot receive mail - invite not sent`);
+    return { delivered: false, reason: 'unroutable_address', link };
+  }
   const subject = (COPY[mode] || COPY.invite).subject(appName);
   const html = inviteHtml({ name, link, appName, expiresInMinutes, mode });
   const text = inviteText({ name, link, appName, expiresInMinutes, mode });
@@ -258,6 +275,10 @@ function decisionText({ name, workspace, signInUrl, approved, reason, appName })
  * approval into an error - the applicant can still be told by hand.
  */
 async function sendTrialDecision({ to, name, workspace, signInUrl, approved, reason, appName = 'QualChek' }) {
+  if (isUnroutable(to)) {
+    console.log(`[mailer] ${to} is a reserved address that cannot receive mail - decision not sent`);
+    return { delivered: false, reason: 'unroutable_address' };
+  }
   const subject = approved
     ? `Your ${appName} workspace is ready`
     : `About your ${appName} trial request`;
