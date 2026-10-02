@@ -12,10 +12,10 @@ import { IDLE_MINUTES } from '../hooks/useIdleLogout';
 // is the first thing in reach.
 
 const POINTS = [
-  'Bring your existing cases in from Excel',
-  'Crawl any app and generate its test cases',
+  'Import your existing test cases from Excel',
+  'Crawl any app and it writes the test cases',
   'Record a session and turn clicks into steps',
-  'Export Playwright, Cypress or Pytest scripts',
+  'Generate automation scripts from your test cases',
   'Automated runs reported straight from your pipeline',
   'Defects raised straight into Jira, with context',
 ];

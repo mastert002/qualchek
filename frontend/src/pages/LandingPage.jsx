@@ -265,8 +265,8 @@ function ScriptVisual() {
 /* ------------------------------------------------------------- sections -- */
 const FEATURES = [
   {
-    eyebrow: 'Bring what you have',
-    title: 'Your existing cases, in minutes.',
+    eyebrow: 'Excel import',
+    title: 'Import the test cases you already have.',
     body: 'Most teams already have a spreadsheet somewhere. Upload it and QualChek matches '
         + 'your columns to its fields by itself - a sheet headed "Test Case / Steps / Expected" '
         + 'needs no configuring. You see exactly what will be created before anything is written.',
@@ -295,7 +295,7 @@ const FEATURES = [
   },
   {
     eyebrow: 'Automation',
-    title: 'Turn a test case into code.',
+    title: 'Generate automation scripts from your test cases.',
     body: 'Select the cases you want automated and export them as a runnable suite. The steps '
         + 'you already wrote become the body of the test, so automating a case starts from '
         + 'something real rather than an empty file.',
