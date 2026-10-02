@@ -1230,14 +1230,5 @@ module.exports = {
         responses: { 200: json('Healthy', { type: 'object', properties: { status: { type: 'string', example: 'ok' } } }) },
       },
     },
-    '/import': {
-      post: {
-        tags: ['System'], summary: 'Run a maintenance SQL statement',
-        description:
-          'Administrative escape hatch for migrations against the live database. Admins only; use with care.',
-        requestBody: body({ type: 'object', required: ['sql'], properties: { sql: { type: 'string' } } }),
-        responses: { 200: json('Executed', { type: 'object' }), 403: err('Admins only') },
-      },
-    },
   },
 };

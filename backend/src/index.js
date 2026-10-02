@@ -101,7 +101,6 @@ app.use('/api/jira', require('./routes/jira'));
 app.use('/api/ci', require('./routes/ci'));
 app.use('/api/projects/:projectId/crawl', require('./routes/crawler'));
 app.use('/api/projects/:projectId/scripts', require('./routes/scripts'));
-app.use('/api/import', require('./routes/import'));
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
 // Serve frontend build in production (local/Railway only — Vercel serves frontend separately)

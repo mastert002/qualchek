@@ -26,10 +26,7 @@ frontend/build/
 *.sqlite3
 backend/data/
 
-# SQL dumps and import scripts — may contain secrets.
-# Anchored to the specific scripts: a bare *import*.js also matched
-# backend/src/routes/import.js, which index.js requires at startup —
-# excluding it crashes the whole server with MODULE_NOT_FOUND.
+# SQL dumps and one-off migration scripts — may contain secrets.
 *.sql
 /import_direct.js
 /backend/import_direct.js
