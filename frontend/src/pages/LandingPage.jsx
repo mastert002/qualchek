@@ -591,7 +591,9 @@ export default function LandingPage() {
 
                 <ul className="mt-6 space-y-2.5 border-t border-slate-100 pt-6">
                   {['The crawler and session recording', 'Unlimited projects and test cases',
-                    'CI reporting and Jira integration', 'Every feature — tiers differ only by size'].map(f => (
+                    'CI/CD workflow integration — any pipeline',
+                    'Jira issues, with comments both ways',
+                    'Every feature — tiers differ only by size'].map(f => (
                     <li key={f} className="flex items-start gap-2 text-[13.5px] text-slate-600">
                       <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-brand-600" />{f}
                     </li>
