@@ -53,7 +53,7 @@ export default function RequestTrialPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-white">
       {/* ---------------- left: the pitch ---------------------------------- */}
-      <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-slate2-deep px-12 py-12 text-white">
+      <div className="relative hidden lg:flex flex-col justify-start overflow-hidden bg-slate2-deep px-12 py-12 text-white">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.07]"
              style={{ backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)', backgroundSize: '26px 26px' }} />
         <div aria-hidden="true" className="pointer-events-none absolute -top-28 -right-24 w-[32rem] h-[32rem] rounded-full"
@@ -69,7 +69,7 @@ export default function RequestTrialPage() {
           </div>
         </div>
 
-        <div className="relative mt-12 lg:mt-auto lg:pt-16">
+        <div className="relative mt-10 lg:mt-12">
           <p className="text-[11px] font-bold tracking-[0.16em] text-brand-400 uppercase">
             14-day trial &middot; no card required
           </p>
@@ -105,7 +105,7 @@ export default function RequestTrialPage() {
           )}
         </div>
 
-        <div className="relative mt-12 lg:mt-14 text-[11px] text-white/30">
+        <div className="relative mt-auto pt-10 text-[11px] text-white/30">
           © {new Date().getFullYear()} QualChek
         </div>
       </div>
