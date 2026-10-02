@@ -140,17 +140,48 @@ function escapeHtml(s) {
  * Never throws: user creation must not fail because email delivery did. The
  * caller reports `delivered` so the admin can be told to pass the link on.
  */
-async function sendViaSmtp({ to, subject, html, text }) {
-  // Required lazily: if the dependency is ever missing from a deployment, this
-  // throws here and is caught below, instead of crashing the whole API at boot.
+// One pooled transport, not one per message.
+//
+// Connecting to Gmail costs roughly seven seconds the first time - DNS, TLS and
+// authentication - and about a second once warm. Building a transport per send
+// made every approval pay the full handshake while an operator watched the
+// button, because delivery is awaited so the console can report whether the
+// applicant was actually told. Pooling keeps the connection open between
+// messages; warmTransport() pays the cold cost once at startup instead of on
+// somebody's click.
+let _transport = null;
+
+function getTransport() {
+  if (_transport) return _transport;
   const nodemailer = require('nodemailer');
-  const transport = nodemailer.createTransport({
+  _transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT || 465),
     secure: String(process.env.SMTP_SECURE || 'true') !== 'false',
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    pool: true,
+    maxConnections: 2,
+    // Without these a provider that stops responding holds the request open
+    // until something else times out, which from the console looks like the
+    // approval itself having hung.
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
   });
-  await transport.sendMail({
+  return _transport;
+}
+
+/** Open the connection ahead of the first message. Never throws: a mail server
+ *  that is unreachable at boot must not stop the API starting. */
+function warmTransport() {
+  if (!(process.env.SMTP_USER && process.env.SMTP_PASS)) return Promise.resolve(false);
+  return getTransport().verify()
+    .then(() => { console.log('[mailer] SMTP ready'); return true; })
+    .catch(err => { console.warn(`[mailer] SMTP not ready: ${err.message}`); return false; });
+}
+
+async function sendViaSmtp({ to, subject, html, text }) {
+  await getTransport().sendMail({
     // Gmail rewrites From to the authenticated account anyway, so default the
     // address to SMTP_USER and let MAIL_FROM only set the display name.
     from: process.env.MAIL_FROM || `QualChek <${process.env.SMTP_USER}>`,
@@ -305,4 +336,4 @@ async function sendTrialDecision({ to, name, workspace, signInUrl, approved, rea
   }
 }
 
-module.exports = { sendInvite, sendTrialDecision, baseUrlFrom };
+module.exports = { sendInvite, sendTrialDecision, baseUrlFrom, warmTransport };

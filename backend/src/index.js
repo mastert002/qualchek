@@ -63,6 +63,11 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// Open the SMTP connection at startup rather than on the first approval, which
+// otherwise waits several seconds for a handshake. Deliberately not awaited:
+// mail being unavailable must not delay or prevent the API serving requests.
+require('./lib/mailer').warmTransport();
+
 // Start DB init immediately at module load so connection is ready before first request
 let dbReady = false;
 const dbInitPromise = initDb().then(() => { dbReady = true; }).catch(err => {
