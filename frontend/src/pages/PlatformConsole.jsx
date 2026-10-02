@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Check, X, Clock, Building2, Mail, Phone, LogOut } from 'lucide-react';
+import { Check, X, Clock, Building2, Mail, Phone, LogOut, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import QCLogo from '../components/QCLogo';
 import PasswordInput from '../components/PasswordInput';
@@ -100,8 +100,11 @@ function RequestCard({ r, onDecided }) {
   const act = async (what, body) => {
     setBusy(what); setErr('');
     try {
-      await platform.post(`/requests/${r.id}/${what}`, body || {});
-      onDecided();
+      const { data } = await platform.post(`/requests/${r.id}/${what}`, body || {});
+      // The decision succeeded whatever the mail did, but an operator who is
+      // not told the applicant never heard will assume they did - and the
+      // applicant waits for an email that is not coming.
+      onDecided({ ...data, what, email: r.email });
     } catch (e) {
       setErr(e.response?.data?.error || 'That did not work');
       setBusy('');
@@ -195,6 +198,8 @@ export default function PlatformConsole() {
       .finally(() => setChecking(false));
   }, []);
 
+  const [notice, setNotice] = useState(null);
+
   const load = useCallback(() => {
     platform.get('/requests', { params: filter === 'all' ? {} : { status: filter } })
       .then(r => setData(r.data))
@@ -202,6 +207,12 @@ export default function PlatformConsole() {
   }, [filter]);
 
   useEffect(() => { if (operator) load(); }, [operator, load]);
+
+  const onDecided = outcome => {
+    load();
+    if (outcome && outcome.email_delivered === false) setNotice(outcome);
+    else setNotice(null);
+  };
 
   if (checking) return <div className="min-h-screen bg-slate-50" />;
   if (!operator) return <Login onIn={setOperator} />;
@@ -241,6 +252,27 @@ export default function PlatformConsole() {
           Approving provisions the workspace, its first admin, and a 14-day trial.
         </p>
 
+        {notice && (
+          <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-warn-500/30 bg-warn-50 px-4 py-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warn-500" />
+            <div className="text-[13.5px] leading-relaxed">
+              <p className="font-semibold text-warn-500">
+                {notice.what === 'approve' ? 'Workspace created, but no email was sent' : 'Declined, but no email was sent'}
+              </p>
+              <p className="mt-0.5 text-ink-600">
+                {notice.email_reason === 'not_configured'
+                  ? 'No mail provider is configured on this deployment, so nothing was delivered.'
+                  : `Sending failed: ${notice.email_reason || 'unknown reason'}.`}{' '}
+                Tell <span className="font-semibold">{notice.email}</span> by hand
+                {notice.what === 'approve' ? ' — they can sign in now with the password they chose.' : '.'}
+              </p>
+            </div>
+            <button onClick={() => setNotice(null)} className="ml-auto text-ink-400 hover:text-ink-600">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         <div className="mt-5 flex gap-1.5">
           {tabs.map(([key, label, n]) => (
             <button key={key} onClick={() => setFilter(key)}
@@ -261,7 +293,7 @@ export default function PlatformConsole() {
               </p>
             </div>
           )}
-          {data.requests.map(r => <RequestCard key={r.id} r={r} onDecided={load} />)}
+          {data.requests.map(r => <RequestCard key={r.id} r={r} onDecided={onDecided} />)}
         </div>
       </main>
     </div>
