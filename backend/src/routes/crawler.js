@@ -12,6 +12,7 @@ const { launchBrowser, isServerless } = require('../lib/browser');
 // inside that; anything larger needs to run locally.
 const SERVERLESS_MAX_PAGES = 5;
 const { authenticate } = require('../middleware/auth');
+const { requireProject } = require('../middleware/project');
 
 const router = express.Router({ mergeParams: true });
 router.use(authenticate);
@@ -49,6 +50,12 @@ function requireAdmin(req, res, next) {
 }
 
 router.use(requireProjectAccess);
+
+// requireProjectAccess answers "may this person reach this project", and
+// returns early for a global admin or viewer - so it never confirms the project
+// exists in this workspace at all. requireProject does, which stops a write
+// naming another workspace's project id.
+router.use(requireProject);
 
 // In-memory job store
 const jobs = new Map();

@@ -1,9 +1,13 @@
 ﻿const express = require('express');
 const { getDb } = require('../db/database');
 const { authenticate } = require('../middleware/auth');
+const { requireProject } = require('../middleware/project');
 
 const router = express.Router({ mergeParams: true });
 router.use(authenticate);
+// The project in the URL must belong to this workspace. Reads are already
+// scoped by the policies; this closes writes naming a foreign project id.
+router.use(requireProject);
 
 router.get('/summary', async (req, res) => {
   try {

@@ -4,6 +4,7 @@ const http = require('http');
 const { v4: uuidv4 } = require('uuid');
 const { getDb, nowISO } = require('../db/database');
 const { authenticate } = require('../middleware/auth');
+const { requireProject } = require('../middleware/project');
 const audit = require('../lib/audit');
 
 function parseJUnitXml(xml) {
@@ -67,6 +68,9 @@ function postJiraComment(config, issueKey, text) {
 
 const router = express.Router({ mergeParams: true });
 router.use(authenticate);
+// The project in the URL must belong to this workspace. Reads are already
+// scoped by the policies; this closes writes naming a foreign project id.
+router.use(requireProject);
 
 router.get('/', async (req, res) => {
   try {

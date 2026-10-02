@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Trash2, ChevronRight, FolderPlus, ListChecks, Edit2, Code2 } from 'lucide-react';
+import { Plus, Search, Trash2, ChevronRight, FolderPlus, ListChecks, Edit2, Code2 , Upload} from 'lucide-react';
 import api from '../utils/api';
 import { safeHttpUrl } from '../utils/url';
 import Modal from '../components/Modal';
+import ImportCasesModal from '../components/ImportCasesModal';
 import ExportScriptsModal from '../components/ExportScriptsModal';
 import { PRIORITY_COLORS, STATUS_COLORS, fmtDate } from '../utils/helpers';
 import { useRole } from '../hooks/useRole';
@@ -127,6 +128,7 @@ export default function TestCasesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showSuite, setShowSuite] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [suiteName, setSuiteName] = useState('');
   const [editSuite, setEditSuite] = useState(null);
   const [filters, setFilters] = useState({ search: '', priority: '', status: '', suite_id: '' });
@@ -247,9 +249,14 @@ export default function TestCasesPage() {
             </button>
           )}
           {canCreate && (
-            <button onClick={() => setShowCreate(true)} className="btn-primary">
-              <Plus className="w-4 h-4" /> New Test Case
-            </button>
+            <>
+              <button onClick={() => setShowImport(true)} className="btn-secondary">
+                <Upload className="w-4 h-4" /> Import
+              </button>
+              <button onClick={() => setShowCreate(true)} className="btn-primary">
+                <Plus className="w-4 h-4" /> New Test Case
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -393,6 +400,15 @@ export default function TestCasesPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {showImport && (
+        <ImportCasesModal
+          projectId={projectId}
+          suiteId={filters.suite_id || null}
+          onClose={() => setShowImport(false)}
+          onImported={() => qc.invalidateQueries({ queryKey: ['test-cases', projectId] })}
+        />
       )}
 
       {showCreate && (

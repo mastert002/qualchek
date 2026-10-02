@@ -1,12 +1,17 @@
 ﻿const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb, nowISO } = require('../db/database');
+const { normaliseRows } = require('../lib/importCases');
 const { authenticate } = require('../middleware/auth');
+const { requireProject } = require('../middleware/project');
 const audit = require('../lib/audit');
 const { commentOnLinkedIssue } = require('../lib/jira');
 
 const router = express.Router({ mergeParams: true });
 router.use(authenticate);
+// The project in the URL must belong to this workspace. Reads are already
+// scoped by the policies; this closes writes naming a foreign project id.
+router.use(requireProject);
 
 router.get('/', async (req, res) => {
   try {
@@ -30,6 +35,83 @@ router.get('/', async (req, res) => {
     const cases = await db.prepare(query).all(...params);
     res.json(cases.map(c => ({ ...c, steps: JSON.parse(c.steps || '[]'), tags: JSON.parse(c.tags || '[]') })));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Internal server error' }); }
+});
+
+// POST /api/projects/:projectId/test-cases/import
+//
+// Bulk create from a spreadsheet. The file was parsed in the browser, so this
+// receives rows as JSON - see lib/importCases.js for why.
+router.post('/import', async (req, res) => {
+  try {
+    if (req.user.role === 'viewer') return res.status(403).json({ error: 'Viewers cannot import test cases' });
+
+    const rows = Array.isArray(req.body.cases) ? req.body.cases : null;
+    if (!rows) return res.status(400).json({ error: 'cases must be an array of rows' });
+    if (rows.length === 0) return res.status(400).json({ error: 'The file had no rows to import' });
+
+    const { accepted, rejected, truncated } = normaliseRows(rows);
+
+    const db = getDb();
+    const projectId = req.params.projectId;
+    const suiteId = req.body.suite_id || null;
+
+    if (suiteId) {
+      const suite = await db.prepare('SELECT id FROM test_suites WHERE id = ? AND project_id = ?')
+        .get(suiteId, projectId);
+      if (!suite) return res.status(400).json({ error: 'That suite does not belong to this project' });
+    }
+
+    // Title-based duplicate detection, matching how the crawler decides what it
+    // has already generated. Someone re-importing a corrected spreadsheet
+    // expects the unchanged rows to be left alone, not duplicated.
+    const skipDuplicates = req.body.skip_duplicates !== false;
+    const existing = new Set(
+      skipDuplicates
+        ? (await db.prepare('SELECT title FROM test_cases WHERE project_id = ?').all(projectId))
+            .map(r => String(r.title).trim().toLowerCase())
+        : []
+    );
+
+    const now = nowISO();
+    let created = 0, skipped = 0;
+    const failed = [...rejected];
+
+    for (const c of accepted) {
+      const key = c.title.toLowerCase();
+      if (skipDuplicates && existing.has(key)) { skipped++; continue; }
+      try {
+        await db.prepare(`
+          INSERT INTO test_cases (id, suite_id, project_id, title, description, preconditions, steps,
+                                  expected_result, priority, status, tags, created_by,
+                                  automation_status, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(uuidv4(), suiteId, projectId, c.title, c.description, c.preconditions,
+          JSON.stringify(c.steps), c.expected_result, c.priority, c.status,
+          JSON.stringify(c.tags), req.user.id, c.automation_status, now, now);
+        created++;
+        // Guards against the same title appearing twice within one file.
+        existing.add(key);
+      } catch (err) {
+        failed.push({ title: c.title.slice(0, 60), reason: err.message });
+      }
+    }
+
+    await audit.record(req, 'testcases.imported',
+      { type: 'project', id: projectId },
+      { created, skipped, failed: failed.length, suite_id: suiteId });
+
+    res.json({
+      created, skipped,
+      failed: failed.length,
+      // Capped: a file where everything failed should not return a response
+      // larger than the file.
+      errors: failed.slice(0, 50),
+      truncated,
+    });
+  } catch (err) {
+    console.error('import:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 router.post('/', async (req, res) => {
