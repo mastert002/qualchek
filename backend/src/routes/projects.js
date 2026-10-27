@@ -41,6 +41,18 @@ router.get('/', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Internal server error' }); }
 });
 
+// Suites every new project starts with. Teams add their own on top with New Suite.
+const DEFAULT_SUITES = [
+  'Authentication',
+  'Dashboard',
+  'User Management',
+  'Reports & Export',
+  'End-to-End Flows',
+  'Regression - Core',
+  'Smoke Tests',
+  'API Tests',
+];
+
 router.post('/', async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can create projects' });
@@ -50,6 +62,12 @@ router.post('/', async (req, res) => {
     const id = uuidv4();
     await db.prepare('INSERT INTO projects (id, name, description, created_by, created_at) VALUES (?, ?, ?, ?, ?)').run(id, name, description || null, req.user.id, nowISO());
     await db.prepare('INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)').run(id, req.user.id, 'admin');
+    // Rows take their tenant from the request's tenant context, so these suites
+    // belong to the same workspace as the project.
+    for (const suiteName of DEFAULT_SUITES) {
+      await db.prepare('INSERT INTO test_suites (id, project_id, name, description, parent_id, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(uuidv4(), id, suiteName, null, null, nowISO());
+    }
     const project = await db.prepare('SELECT * FROM projects WHERE id = ?').get(id);
     await audit.record(req, 'project.created', { type: 'project', id, label: name });
     res.status(201).json(project);
