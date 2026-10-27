@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Trash2, ChevronRight, FolderPlus, ListChecks, Edit2, Code2 , Upload} from 'lucide-react';
+import { Plus, Search, Trash2, ChevronRight, FolderPlus, ListChecks, Edit2, Code2 , Upload, Download } from 'lucide-react';
 import api from '../utils/api';
 import { safeHttpUrl } from '../utils/url';
 import Modal from '../components/Modal';
 import ImportCasesModal from '../components/ImportCasesModal';
 import ExportScriptsModal from '../components/ExportScriptsModal';
+import { downloadUatWorkbook } from '../utils/uatWorkbook';
+import { buildUatDocx } from '../utils/uatDocx';
+import { useAuth } from '../context/AuthContext';
 import { PRIORITY_COLORS, STATUS_COLORS, fmtDate } from '../utils/helpers';
 import { useRole } from '../hooks/useRole';
 import { useToast } from '../context/ToastContext';
@@ -136,6 +139,39 @@ export default function TestCasesPage() {
   const qc = useQueryClient();
   const { canCreate, canDelete, canManage, isViewer } = useRole();
   const toast = useToast();
+  const { user } = useAuth();
+  const [generatingWord, setGeneratingWord] = useState(false);
+  const [showUatMenu, setShowUatMenu] = useState(false);
+  const { data: project } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => api.get(`/projects/${projectId}`).then(r => r.data),
+  });
+
+  const saveBlob = (blob, fileName) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleUatWord = async () => {
+    const chosen = cases.filter(c => selected.includes(c.id));
+    setGeneratingWord(true);
+    try {
+      const blob = await buildUatDocx(chosen, {
+        projectName: project?.name || '',
+        preparedBy: user?.name || user?.email || '',
+      });
+      const date = new Date().toISOString().slice(0, 10);
+      saveBlob(blob, `uat-signoff-${date}.docx`);
+    } catch (err) {
+      toast.error(err.message || 'Could not generate the Word document');
+    } finally {
+      setGeneratingWord(false);
+    }
+  };
   const { confirm } = useConfirm();
 
   const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
@@ -293,6 +329,36 @@ export default function TestCasesPage() {
           <span className="text-sm font-medium text-brand-700">{selected.length} selected</span>
           <div className="flex-1" />
           <button onClick={() => setSelected([])} className="btn-ghost text-sm py-1">Clear</button>
+          <div className="relative">
+            <button
+              onClick={() => setShowUatMenu(open => !open)}
+              aria-expanded={showUatMenu}
+              disabled={generatingWord}
+              className="btn-secondary text-sm py-1"
+            >
+              <Download className="w-4 h-4" />
+              {generatingWord ? 'Generating…' : 'Generate UAT Testcase'}
+            </button>
+            {showUatMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowUatMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-white border border-gray-200 rounded-md shadow-lg py-1">
+                  <button
+                    onClick={() => { setShowUatMenu(false); downloadUatWorkbook(cases.filter(c => selected.includes(c.id))); }}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Export in Excel
+                  </button>
+                  <button
+                    onClick={() => { setShowUatMenu(false); handleUatWord(); }}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Export in Word
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={() => setShowExport(true)}
             className="btn-secondary text-sm py-1"
