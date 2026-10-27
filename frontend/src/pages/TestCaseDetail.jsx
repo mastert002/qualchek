@@ -80,7 +80,7 @@ export default function TestCaseDetail() {
         </Link>
         <h1 className="text-xl font-bold text-gray-900 flex-1">{tc.title}</h1>
         {!isViewer && (
-          <button onClick={() => { setEditing(true); setEditForm({ ...tc, tags: tc.tags?.join(', '), steps: tc.steps || [], expected_result: tc.expected_result || '' }); }} className="btn-secondary">
+          <button onClick={() => { setEditing(true); setEditForm({ ...tc, tags: tc.tags?.join(', '), steps: tc.steps || [], expected_result: tc.expected_result || '', description: tc.description || '', preconditions: tc.preconditions || '' }); }} className="btn-secondary">
             <Edit2 className="w-4 h-4" /> Edit
           </button>
         )}
@@ -235,6 +235,10 @@ export default function TestCaseDetail() {
               }} className="space-y-4">
                 <div><label className="label">Title</label>
                   <input className="input" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
+                <div><label className="label">Description</label>
+                  <textarea className="input" rows={3} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} /></div>
+                <div><label className="label">Preconditions</label>
+                  <textarea className="input" rows={3} value={editForm.preconditions} onChange={e => setEditForm(f => ({ ...f, preconditions: e.target.value }))} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><label className="label">Priority</label>
                     <select className="input" value={editForm.priority} onChange={e => setEditForm(f => ({ ...f, priority: e.target.value }))}>
