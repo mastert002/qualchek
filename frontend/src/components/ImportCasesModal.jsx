@@ -199,7 +199,7 @@ export default function ImportCasesModal({ onClose, projectId, suiteId, onImport
           <div className="mt-5 rounded-lg bg-gray-50 px-4 py-3.5">
             <p className="text-[13px] text-gray-600">
               A <strong>Title</strong> column is the only one required. Steps can be a numbered or
-              bulleted list, one per line, and <code className="rounded bg-white px-1 py-0.5 text-[12px]">-&gt;</code>{' '}
+              bulleted list, one per line, and <code className="rounded bg-surface px-1 py-0.5 text-[12px]">-&gt;</code>{' '}
               separates a step from what should happen.
             </p>
             <button onClick={downloadTemplate}

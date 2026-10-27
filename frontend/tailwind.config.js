@@ -8,6 +8,7 @@
 // 600 and 700 hold the primary/hover pair, so the existing
 // `bg-brand-600 hover:bg-brand-700` buttons land on brand without edits.
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
@@ -19,8 +20,23 @@ export default {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'Consolas', 'monospace'],
       },
       colors: {
+        // Greys, the surface colour and the brand tint come from CSS variables
+        // (see index.css), so dark mode switches the whole app from one place.
+        gray: {
+          50:  'rgb(var(--gray-50) / <alpha-value>)',
+          100: 'rgb(var(--gray-100) / <alpha-value>)',
+          200: 'rgb(var(--gray-200) / <alpha-value>)',
+          300: 'rgb(var(--gray-300) / <alpha-value>)',
+          400: 'rgb(var(--gray-400) / <alpha-value>)',
+          500: 'rgb(var(--gray-500) / <alpha-value>)',
+          600: 'rgb(var(--gray-600) / <alpha-value>)',
+          700: 'rgb(var(--gray-700) / <alpha-value>)',
+          800: 'rgb(var(--gray-800) / <alpha-value>)',
+          900: 'rgb(var(--gray-900) / <alpha-value>)',
+        },
+        surface: 'rgb(var(--surface) / <alpha-value>)',
         brand: {
-          50:  '#eefbf8',
+          50:  'rgb(var(--brand-50) / <alpha-value>)',
           100: '#d2f5ee',
           200: '#a8ebdf',
           300: '#71dbcc',

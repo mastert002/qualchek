@@ -25,7 +25,7 @@ function Nav() {
             style={{ top: 'env(safe-area-inset-top, 0px)' }}>
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-5 py-3.5">
         <Link to="/" className="flex items-center gap-2.5 text-white">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-white/15 bg-white/10">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-white/15 bg-surface/10">
             <QCLogo className="h-[21px] w-[21px]" />
           </div>
           <span className="font-display text-[16.5px] font-bold tracking-[-0.025em]">QualChek</span>
@@ -351,15 +351,15 @@ const FAQ = [
 function FaqItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-slate-200">
+    <div className="border-b border-gray-200">
       <button onClick={() => setOpen(o => !o)} aria-expanded={open}
               className="flex w-full items-center gap-4 py-5 text-left">
-        <span className="font-display text-[16px] font-bold tracking-[-0.01em] text-slate-900">{q}</span>
-        <span className="ml-auto flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-400">
+        <span className="font-display text-[16px] font-bold tracking-[-0.01em] text-gray-900">{q}</span>
+        <span className="ml-auto flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-400">
           {open ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
         </span>
       </button>
-      {open && <p className="max-w-3xl pb-5 text-[14.5px] leading-relaxed text-slate-600">{a}</p>}
+      {open && <p className="max-w-3xl pb-5 text-[14.5px] leading-relaxed text-gray-600">{a}</p>}
     </div>
   );
 }
@@ -453,7 +453,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="bg-white">
+    <div className="bg-surface">
       <Nav />
 
       {/* ------------------------------------------------------- hero ---- */}
@@ -508,7 +508,7 @@ export default function LandingPage() {
 
           <div className="relative">
             <div aria-hidden="true" className="absolute -inset-5 rounded-3xl bg-gradient-to-br from-brand-500/15 to-indigo2-500/10 blur-2xl" />
-            <div className="relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-sm">
+            <div className="relative rounded-2xl border border-white/10 bg-surface/[0.03] p-4 backdrop-blur-sm">
               <HeroVisual />
             </div>
           </div>
@@ -516,13 +516,13 @@ export default function LandingPage() {
       </section>
 
       {/* -------------------------------------------------------- why ---- */}
-      <section id="why" className="border-b border-slate-200 bg-slate-50">
+      <section id="why" className="border-b border-gray-200 bg-gray-50">
         <div className="mx-auto max-w-6xl px-5 py-16 lg:py-20">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-            <h2 className="font-display text-[1.9rem] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 text-balance sm:text-[2.4rem]">
+            <h2 className="font-display text-[1.9rem] font-extrabold leading-tight tracking-[-0.035em] text-gray-900 text-balance sm:text-[2.4rem]">
               Writing test cases is the part nobody has time for.
             </h2>
-            <div className="space-y-4 text-[15.5px] leading-relaxed text-slate-600">
+            <div className="space-y-4 text-[15.5px] leading-relaxed text-gray-600">
               <p>
                 Which is why coverage is usually thinner than anyone admits. The suite covers the login
                 page and the happy path, and the rest is in somebody&rsquo;s head.
@@ -532,7 +532,7 @@ export default function LandingPage() {
                 keep it. QualChek starts one step earlier: it reads your application and produces the
                 cases, so the work becomes reviewing a list instead of facing a blank page.
               </p>
-              <p className="font-semibold text-slate-900">
+              <p className="font-semibold text-gray-900">
                 Everything else — runs, reports, CI, Jira — works the way you would expect.
               </p>
             </div>
@@ -548,13 +548,13 @@ export default function LandingPage() {
                  className={`grid items-center gap-10 lg:grid-cols-2 lg:gap-16 ${i % 2 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
               <div>
                 <p className="font-display text-[11.5px] font-bold uppercase tracking-[0.16em] text-brand-600">{eyebrow}</p>
-                <h3 className="mt-3 font-display text-[1.75rem] font-extrabold leading-tight tracking-[-0.03em] text-slate-900 text-balance sm:text-[2.1rem]">
+                <h3 className="mt-3 font-display text-[1.75rem] font-extrabold leading-tight tracking-[-0.03em] text-gray-900 text-balance sm:text-[2.1rem]">
                   {title}
                 </h3>
-                <p className="mt-4 text-[15.5px] leading-relaxed text-slate-600">{body}</p>
+                <p className="mt-4 text-[15.5px] leading-relaxed text-gray-600">{body}</p>
                 <ul className="mt-6 space-y-2.5">
                   {points.map(p => (
-                    <li key={p} className="flex items-start gap-2.5 text-[14.5px] text-slate-700">
+                    <li key={p} className="flex items-start gap-2.5 text-[14.5px] text-gray-700">
                       <span className="mt-0.5 flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-brand-50 ring-1 ring-brand-200">
                         <Check className="h-3 w-3 text-brand-600" />
                       </span>
@@ -563,7 +563,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
               </div>
-              <div className={`rounded-2xl border p-5 ${wide ? 'border-slate-200 bg-[#0a1420]' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+              <div className={`rounded-2xl border p-5 ${wide ? 'border-gray-200 bg-[#0a1420]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
                 <Visual />
               </div>
             </div>
@@ -573,16 +573,16 @@ export default function LandingPage() {
 
 
       {/* ------------------------------------------------- ci workflow ---- */}
-      <section id="pipeline" className="border-t border-slate-200 bg-slate-50">
+      <section id="pipeline" className="border-t border-gray-200 bg-gray-50">
         <div className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
           <div className="max-w-2xl">
             <p className="font-display text-[11.5px] font-bold uppercase tracking-[0.16em] text-brand-600">
               Test run automation
             </p>
-            <h2 className="mt-3 font-display text-[1.9rem] font-extrabold leading-tight tracking-[-0.035em] text-slate-900 text-balance sm:text-[2.3rem]">
+            <h2 className="mt-3 font-display text-[1.9rem] font-extrabold leading-tight tracking-[-0.035em] text-gray-900 text-balance sm:text-[2.3rem]">
               Three calls, and your pipeline reports in
             </h2>
-            <p className="mt-4 text-[15.5px] leading-relaxed text-slate-600">
+            <p className="mt-4 text-[15.5px] leading-relaxed text-gray-600">
               No plugin, no agent, no SDK to keep up to date — QualChek takes results over
               HTTP, so whatever your suite is written in can report into it. Here it is in a
               GitHub Actions workflow; GitLab, Jenkins and Azure Pipelines are the same three
@@ -594,26 +594,26 @@ export default function LandingPage() {
             <ol className="space-y-7">
               {EXCHANGE.map(([title, endpoint, body], i) => (
                 <li key={title} className="relative pl-11">
-                  <span className="absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 font-display text-[12.5px] font-bold text-white">
+                  <span className="absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 font-display text-[12.5px] font-bold text-white">
                     {i + 1}
                   </span>
-                  <h3 className="font-display text-[16.5px] font-bold text-slate-900">{title}</h3>
+                  <h3 className="font-display text-[16.5px] font-bold text-gray-900">{title}</h3>
                   <code className="mt-1.5 block font-mono text-[11.5px] text-brand-700">{endpoint}</code>
-                  <p className="mt-2 text-[14px] leading-relaxed text-slate-600">{body}</p>
+                  <p className="mt-2 text-[14px] leading-relaxed text-gray-600">{body}</p>
                 </li>
               ))}
-              <li className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-[13px] leading-relaxed text-slate-500">
-                <span className="font-semibold text-slate-700">The key is scoped to one workspace.</span>{' '}
+              <li className="rounded-xl border border-gray-200 bg-surface px-4 py-3.5 text-[13px] leading-relaxed text-gray-500">
+                <span className="font-semibold text-gray-700">The key is scoped to one workspace.</span>{' '}
                 It cannot read or write another customer&rsquo;s projects, and a lapsed trial
                 makes reporting fail loudly rather than appear to succeed while nothing is recorded.
               </li>
             </ol>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-800 bg-[#0a1420] shadow-[0_20px_60px_-30px_rgba(10,20,32,0.8)]">
+            <div className="overflow-hidden rounded-2xl border border-gray-800 bg-[#0a1420] shadow-[0_20px_60px_-30px_rgba(10,20,32,0.8)]">
               <div className="flex items-center gap-2 border-b border-white/[0.08] px-5 py-3">
-                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                <span className="h-2.5 w-2.5 rounded-full bg-surface/15" />
+                <span className="h-2.5 w-2.5 rounded-full bg-surface/15" />
+                <span className="h-2.5 w-2.5 rounded-full bg-surface/15" />
                 <span className="ml-2 font-mono text-[11.5px] text-white/35">
                   .github/workflows/qualchek.yml
                 </span>
@@ -625,19 +625,19 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------------------------------------------- compare ---- */}
-      <section id="compare" className="border-y border-slate-200 bg-slate-50">
+      <section id="compare" className="border-y border-gray-200 bg-gray-50">
         <div className="mx-auto max-w-4xl px-5 py-16 lg:py-20">
-          <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.035em] text-slate-900 sm:text-[2.2rem]">
+          <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.035em] text-gray-900 sm:text-[2.2rem]">
             What makes it different
           </h2>
-          <p className="mt-3 text-[15px] text-slate-500">
+          <p className="mt-3 text-[15px] text-gray-500">
             The bottom half of this table is table stakes. The top half is the reason to switch.
           </p>
 
-          <div className="mt-8 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <div className="mt-8 overflow-x-auto rounded-xl border border-gray-200 bg-surface">
             <table className="w-full min-w-[520px] text-[14.5px]">
               <thead>
-                <tr className="border-b border-slate-200 text-[12px] uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-gray-200 text-[12px] uppercase tracking-wide text-gray-400">
                   <th className="px-5 py-3.5 text-left font-medium">Capability</th>
                   <th className="px-5 py-3.5 text-center font-semibold text-brand-600">QualChek</th>
                   <th className="px-5 py-3.5 text-center font-medium">Typical test management</th>
@@ -646,13 +646,13 @@ export default function LandingPage() {
               <tbody>
                 {COMPARE.map(([label, mine, theirs], i) => (
                   <tr key={label} className={i < 3 ? 'bg-brand-50/40' : ''}>
-                    <td className="border-t border-slate-100 px-5 py-3.5 text-slate-700">{label}</td>
-                    <td className="border-t border-slate-100 px-5 py-3.5 text-center">
+                    <td className="border-t border-gray-100 px-5 py-3.5 text-gray-700">{label}</td>
+                    <td className="border-t border-gray-100 px-5 py-3.5 text-center">
                       <Check className="mx-auto h-4 w-4 text-brand-600" />
                     </td>
-                    <td className="border-t border-slate-100 px-5 py-3.5 text-center">
-                      {theirs ? <Check className="mx-auto h-4 w-4 text-slate-400" />
-                              : <Minus className="mx-auto h-4 w-4 text-slate-300" />}
+                    <td className="border-t border-gray-100 px-5 py-3.5 text-center">
+                      {theirs ? <Check className="mx-auto h-4 w-4 text-gray-400" />
+                              : <Minus className="mx-auto h-4 w-4 text-gray-300" />}
                     </td>
                   </tr>
                 ))}
@@ -665,10 +665,10 @@ export default function LandingPage() {
       {/* ---------------------------------------------------- pricing ---- */}
       <section id="pricing" className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
         <div className="text-center">
-          <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.035em] text-slate-900 sm:text-[2.4rem]">
+          <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.035em] text-gray-900 sm:text-[2.4rem]">
             Priced by team size, not per seat
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-[15.5px] leading-relaxed text-slate-500">
+          <p className="mx-auto mt-3 max-w-2xl text-[15.5px] leading-relaxed text-gray-500">
             One flat monthly fee for a cap on people. Adding the tester who was going to use it
             anyway should not change your bill.
           </p>
@@ -681,25 +681,25 @@ export default function LandingPage() {
               <div key={p.code}
                    className={`relative rounded-2xl border p-7 transition-shadow ${
                      featured ? 'border-brand-600 shadow-[0_18px_50px_-24px_rgba(13,138,128,0.5)] ring-1 ring-brand-600'
-                              : 'border-slate-200 hover:shadow-[0_14px_40px_-28px_rgba(15,23,42,0.4)]'}`}>
+                              : 'border-gray-200 hover:shadow-[0_14px_40px_-28px_rgba(15,23,42,0.4)]'}`}>
                 {featured && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-600 px-3 py-1 text-[10.5px] font-bold uppercase tracking-wide text-white">
                     Most chosen
                   </span>
                 )}
-                <h3 className="font-display text-[15px] font-bold text-slate-900">{p.name}</h3>
-                <p className="mt-4 font-display text-[2.6rem] font-extrabold leading-none tracking-[-0.04em] text-slate-900">
-                  {money(p)}<span className="text-[15px] font-medium text-slate-400">/month</span>
+                <h3 className="font-display text-[15px] font-bold text-gray-900">{p.name}</h3>
+                <p className="mt-4 font-display text-[2.6rem] font-extrabold leading-none tracking-[-0.04em] text-gray-900">
+                  {money(p)}<span className="text-[15px] font-medium text-gray-400">/month</span>
                 </p>
-                <p className="mt-2 text-[13.5px] text-slate-500">Up to {p.max_users} people</p>
+                <p className="mt-2 text-[13.5px] text-gray-500">Up to {p.max_users} people</p>
 
-                <ul className="mt-6 space-y-2.5 border-t border-slate-100 pt-6">
+                <ul className="mt-6 space-y-2.5 border-t border-gray-100 pt-6">
                   {['The crawler and session recording', 'Excel import and script export',
                     'Unlimited projects and test cases',
                     'CI/CD workflow integration — any pipeline',
                     'Jira issues, with comments both ways',
                     'Every feature — tiers differ only by size'].map(f => (
-                    <li key={f} className="flex items-start gap-2 text-[13.5px] text-slate-600">
+                    <li key={f} className="flex items-start gap-2 text-[13.5px] text-gray-600">
                       <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-brand-600" />{f}
                     </li>
                   ))}
@@ -708,7 +708,7 @@ export default function LandingPage() {
                 <Link to="/request-trial"
                       className={`mt-7 block rounded-lg px-4 py-3 text-center text-[14.5px] font-semibold transition-colors ${
                         featured ? 'bg-brand-600 text-white hover:bg-brand-700'
-                                 : 'border border-slate-200 text-slate-700 hover:border-slate-300'}`}>
+                                 : 'border border-gray-200 text-gray-700 hover:border-gray-300'}`}>
                   Start free trial
                 </Link>
               </div>
@@ -716,16 +716,16 @@ export default function LandingPage() {
           })}
         </div>
 
-        <p className="mx-auto mt-7 max-w-2xl text-center text-[13px] text-slate-400">
+        <p className="mx-auto mt-7 max-w-2xl text-center text-[13px] text-gray-400">
           A trial runs 14 days with no card. When it ends the workspace becomes read-only rather than
           disappearing — everything QualChek generated stays yours.
         </p>
       </section>
 
       {/* -------------------------------------------------------- faq ---- */}
-      <section className="border-t border-slate-200 bg-slate-50">
+      <section className="border-t border-gray-200 bg-gray-50">
         <div className="mx-auto max-w-4xl px-5 py-16 lg:py-20">
-          <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.035em] text-slate-900">
+          <h2 className="font-display text-[1.9rem] font-extrabold tracking-[-0.035em] text-gray-900">
             Questions
           </h2>
           <div className="mt-8">

@@ -3,12 +3,13 @@ import TrialBanner from './TrialBanner';
 import { useAuth } from '../context/AuthContext';
 import {
   ClipboardCheck, FolderKanban, PlayCircle, BarChart3, ScrollText,
-  LogOut, ChevronRight, Home, Menu, X, UserCog, Settings, Zap, Globe, Video, KeyRound
+  LogOut, ChevronRight, Home, Menu, X, UserCog, Settings, Zap, Globe, Video, KeyRound, Sun, Moon
 } from 'lucide-react';
 import ChangePasswordModal from './ChangePasswordModal';
 import IdleWarningModal from './IdleWarningModal';
 import { useIdleLogout } from '../hooks/useIdleLogout';
 import { useState, useCallback } from 'react';
+import { getTheme, setTheme } from '../utils/theme';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/api';
 import { useRole } from '../hooks/useRole';
@@ -17,6 +18,7 @@ function Sidebar({ projectId, open, onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [changingPassword, setChangingPassword] = useState(false);
+  const [theme, setThemeState] = useState(getTheme);
   const { isViewer } = useRole();
 
   const { data: project } = useQuery({
@@ -46,7 +48,7 @@ function Sidebar({ projectId, open, onClose }) {
       {open && (
         <div className="fixed inset-0 bg-black/30 z-20 lg:hidden" onClick={onClose} />
       )}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 flex flex-col z-30 transition-transform duration-200 ${
+      <aside className={`fixed top-0 left-0 h-full w-64 bg-surface border-r border-gray-200 flex flex-col z-30 transition-transform duration-200 ${
         open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div className="p-4 border-b border-gray-200 flex items-center gap-2">
@@ -101,6 +103,14 @@ function Sidebar({ projectId, open, onClose }) {
                 <KeyRound className="w-4 h-4" />
               </button>
             )}
+            <button
+              onClick={() => { const next = theme === 'dark' ? 'light' : 'dark'; setTheme(next); setThemeState(next); }}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="text-gray-400 hover:text-brand-600"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <button onClick={() => { logout(); navigate('/login'); }} title="Sign out" className="text-gray-400 hover:text-red-500">
               <LogOut className="w-4 h-4" />
             </button>
@@ -131,7 +141,7 @@ export default function Layout() {
       <TrialBanner />
       <Sidebar projectId={projectId} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col lg:ml-64 min-w-0">
-        <header className="bg-white border-b border-gray-200 px-4 py-3 lg:hidden flex items-center gap-3">
+        <header className="bg-surface border-b border-gray-200 px-4 py-3 lg:hidden flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-500">
             <Menu className="w-5 h-5" />
           </button>

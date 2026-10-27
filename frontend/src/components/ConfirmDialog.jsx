@@ -34,7 +34,7 @@ export function ConfirmProvider({ children }) {
       {dialog && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={() => handleClose(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-scale-in"
+          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md p-6 animate-scale-in"
             onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-start gap-4 mb-5">
@@ -54,7 +54,7 @@ export function ConfirmProvider({ children }) {
             {/* Actions */}
             <div className="flex gap-3 justify-end">
               <button onClick={() => handleClose(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-surface border border-gray-300
                   rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors">
                 {dialog.cancelLabel}
               </button>
