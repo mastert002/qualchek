@@ -9,6 +9,7 @@ const FRAMEWORKS = [
     label: 'Playwright',
     lang: 'JavaScript',
     ext: '.spec.js',
+    tsExt: '.spec.ts',
     color: 'bg-green-50 border-green-300 text-green-800',
     activeColor: 'bg-green-600 text-white border-green-600',
     badge: 'bg-green-100 text-green-700',
@@ -21,6 +22,7 @@ const FRAMEWORKS = [
     label: 'Cypress',
     lang: 'JavaScript',
     ext: '.cy.js',
+    tsExt: '.cy.ts',
     color: 'bg-brand-50 border-brand-300 text-brand-800',
     activeColor: 'bg-brand-600 text-white border-brand-600',
     badge: 'bg-brand-100 text-brand-700',
@@ -44,6 +46,7 @@ const FRAMEWORKS = [
 
 export default function ExportScriptsModal({ projectId, selectedIds, allCases, onClose }) {
   const [framework, setFramework] = useState('playwright');
+  const [language, setLanguage] = useState('javascript');
   const [showPreview, setShowPreview] = useState(false);
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -57,6 +60,7 @@ export default function ExportScriptsModal({ projectId, selectedIds, allCases, o
         test_case_ids: selectedIds,
         framework: fw,
         mark_automated: markAutomated,
+        script_language: language,
       }).then(r => r.data),
     onSuccess: data => setResult(data),
   });
@@ -86,7 +90,7 @@ export default function ExportScriptsModal({ projectId, selectedIds, allCases, o
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-surface rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200">
           <div className="flex items-center gap-2">
@@ -116,6 +120,26 @@ export default function ExportScriptsModal({ projectId, selectedIds, allCases, o
                 </ul>
               </div>
 
+              {/* Language selector */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">Language</p>
+                <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden">
+                  {[['javascript', 'JavaScript'], ['typescript', 'TypeScript']].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setLanguage(value)}
+                      aria-pressed={language === value}
+                      className={`px-4 py-1.5 text-sm font-medium ${
+                        language === value ? 'bg-brand-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Framework selector */}
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-3">Choose framework</p>
@@ -137,7 +161,7 @@ export default function ExportScriptsModal({ projectId, selectedIds, allCases, o
                             framework === f.id ? 'border-brand-500 bg-brand-500' : 'border-gray-300'
                           }`} />
                           <span className="font-medium text-sm text-gray-900">{f.label}</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-mono ${f.badge}`}>{f.lang}{f.ext}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-mono ${f.badge}`}>{language === 'typescript' && f.tsExt ? 'TypeScript' : f.lang}{language === 'typescript' && f.tsExt ? f.tsExt : f.ext}</span>
                         </div>
                         {framework === f.id && (
                           <CheckCircle2 className="w-4 h-4 text-brand-600" />
