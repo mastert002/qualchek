@@ -45,7 +45,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-white">
+    <div className="min-h-screen grid lg:grid-cols-2 bg-surface">
 
       {/* ---------------- left: QualChek, the write-up ------------- */}
       <div className="relative overflow-hidden bg-slate2-deep text-white px-7 py-10 lg:px-14 lg:py-14 flex flex-col">
@@ -73,7 +73,7 @@ export default function LoginPage() {
           {/* The mark is drawn in currentColor plus one accent, so unlike a
               fixed-colour logo it can sit straight on the dark panel without a
               white tile behind it. */}
-          <div className="w-10 h-10 rounded-[11px] bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-white/85">
+          <div className="w-10 h-10 rounded-[11px] bg-surface/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-white/85">
             <QCLogo className="w-[24px] h-[24px]" />
           </div>
           <div className="leading-tight">
@@ -115,8 +115,8 @@ export default function LoginPage() {
       {/* ---------------- right: the form ---------------------------------- */}
       <div className="flex items-center justify-center px-6 py-12 lg:px-14">
         <div className="w-full max-w-[400px]">
-          <h2 className="text-[26px] font-extrabold tracking-[-0.03em] text-slate-900">Welcome back</h2>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <h2 className="text-[26px] font-extrabold tracking-[-0.03em] text-gray-900">Welcome back</h2>
+          <p className="mt-1.5 text-sm text-gray-500">
             Sign in to your QualChek account to continue.
           </p>
 
@@ -136,7 +136,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
-              <label htmlFor="login-email" className="block text-[12.5px] font-semibold text-slate-900 mb-1.5">
+              <label htmlFor="login-email" className="block text-[12.5px] font-semibold text-gray-900 mb-1.5">
                 Email address
               </label>
               <input
@@ -152,7 +152,7 @@ export default function LoginPage() {
 
             <div>
               <div className="flex items-baseline justify-between mb-1.5">
-                <label htmlFor="login-password" className="block text-[12.5px] font-semibold text-slate-900">
+                <label htmlFor="login-password" className="block text-[12.5px] font-semibold text-gray-900">
                   Password
                 </label>
                 <Link to="/forgot-password" className="text-[12px] font-semibold text-brand-600 hover:underline">
@@ -180,14 +180,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[13.5px] text-slate-500">
+          <p className="mt-6 text-center text-[13.5px] text-gray-500">
             New to QualChek?{' '}
             <Link to="/request-trial" className="font-semibold text-brand-600 hover:text-brand-700">
               Request a free trial
             </Link>
           </p>
 
-          <p className="mt-8 flex items-start gap-2 text-[11.5px] leading-relaxed text-slate-400">
+          <p className="mt-8 flex items-start gap-2 text-[11.5px] leading-relaxed text-gray-400">
             <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
             <span>
               Access is limited to invited members of your workspace. Sessions are encrypted,

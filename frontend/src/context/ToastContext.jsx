@@ -11,10 +11,10 @@ const ICONS = {
 };
 
 const STYLES = {
-  success: 'bg-white border-l-4 border-green-500',
-  error:   'bg-white border-l-4 border-red-500',
-  warning: 'bg-white border-l-4 border-yellow-400',
-  info:    'bg-white border-l-4 border-brand-500',
+  success: 'bg-surface border-l-4 border-green-500',
+  error:   'bg-surface border-l-4 border-red-500',
+  warning: 'bg-surface border-l-4 border-yellow-400',
+  info:    'bg-surface border-l-4 border-brand-500',
 };
 
 const ICON_STYLES = {

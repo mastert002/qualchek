@@ -50,7 +50,7 @@ function Login({ onIn }) {
     <div className="min-h-screen flex items-center justify-center bg-slate2-deep px-6">
       <div className="w-full max-w-[360px]">
         <div className="flex items-center gap-3 text-white/85">
-          <div className="w-10 h-10 rounded-[11px] bg-white/10 border border-white/15 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[11px] bg-surface/10 border border-white/15 flex items-center justify-center">
             <QCLogo className="w-[24px] h-[24px]" />
           </div>
           <div className="leading-tight">
@@ -70,11 +70,11 @@ function Login({ onIn }) {
         )}
 
         <form onSubmit={submit} className="mt-6 space-y-3.5">
-          <input className="input bg-white/5 border-white/15 text-white placeholder:text-white/30"
+          <input className="input bg-surface/5 border-white/15 text-white placeholder:text-white/30"
                  type="email" required placeholder="you@qualchek.com"
                  value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
           <PasswordInput required placeholder="Password"
-                         className="input bg-white/5 border-white/15 text-white placeholder:text-white/30"
+                         className="input bg-surface/5 border-white/15 text-white placeholder:text-white/30"
                          value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
           <button type="submit" disabled={busy}
                   className="w-full rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-60 px-4 py-2.5 text-[14.5px] font-semibold text-white transition-colors">
@@ -117,34 +117,34 @@ function RequestCard({ r, onDecided }) {
     : 'bg-warn-50 text-warn-500';
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-xl border border-gray-200 bg-surface p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <h3 className="font-display text-[16px] font-bold text-slate-900 truncate">{r.workspace_name}</h3>
+            <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <h3 className="font-display text-[16px] font-bold text-gray-900 truncate">{r.workspace_name}</h3>
             <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide ${tone}`}>
               {r.status}
             </span>
           </div>
-          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-slate-600">
+          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-gray-600">
             <span>{r.contact_name}</span>
-            <span className="inline-flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-slate-400" />{r.email}</span>
-            {r.phone && <span className="inline-flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400" />{r.phone}</span>}
+            <span className="inline-flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-gray-400" />{r.email}</span>
+            {r.phone && <span className="inline-flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-gray-400" />{r.phone}</span>}
           </div>
-          <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-slate-400">
+          <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-gray-400">
             <span className="inline-flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{when(r.submitted_at)}</span>
-            {r.plan_code && <span>plan: <span className="font-semibold text-slate-600">{r.plan_code}</span></span>}
+            {r.plan_code && <span>plan: <span className="font-semibold text-gray-600">{r.plan_code}</span></span>}
             {r.company_size && <span>team size: {r.company_size}</span>}
           </div>
-          {r.note && <p className="mt-2.5 rounded-lg bg-slate-50 px-3 py-2 text-[13px] text-slate-600">{r.note}</p>}
+          {r.note && <p className="mt-2.5 rounded-lg bg-gray-50 px-3 py-2 text-[13px] text-gray-600">{r.note}</p>}
           {r.decision_reason && (
-            <p className="mt-2.5 text-[12.5px] text-slate-500">
-              Reason: <span className="text-slate-700">{r.decision_reason}</span>
+            <p className="mt-2.5 text-[12.5px] text-gray-500">
+              Reason: <span className="text-gray-700">{r.decision_reason}</span>
             </p>
           )}
           {r.reviewer_name && (
-            <p className="mt-1.5 text-[12px] text-slate-400">
+            <p className="mt-1.5 text-[12px] text-gray-400">
               {r.status} by {r.reviewer_name} &middot; {when(r.reviewed_at)}
             </p>
           )}
@@ -157,7 +157,7 @@ function RequestCard({ r, onDecided }) {
               <Check className="w-4 h-4" />{busy === 'approve' ? 'Approving…' : 'Approve'}
             </button>
             <button onClick={() => setRejecting(true)} disabled={!!busy}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 hover:border-slate-300 px-3 py-2 text-[13px] font-semibold text-slate-600 transition-colors">
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 hover:border-gray-300 px-3 py-2 text-[13px] font-semibold text-gray-600 transition-colors">
               <X className="w-4 h-4" />Decline
             </button>
           </div>
@@ -173,7 +173,7 @@ function RequestCard({ r, onDecided }) {
             {busy === 'reject' ? 'Declining…' : 'Confirm'}
           </button>
           <button onClick={() => { setRejecting(false); setReason(''); }}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-[13px] font-semibold text-slate-600">
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-[13px] font-semibold text-gray-600">
             Cancel
           </button>
         </div>
@@ -213,7 +213,7 @@ export default function PlatformConsole() {
     setNotice(outcome || null);
   };
 
-  if (checking) return <div className="min-h-screen bg-slate-50" />;
+  if (checking) return <div className="min-h-screen bg-gray-50" />;
   if (!operator) return <Login onIn={setOperator} />;
 
   const counts = data.counts || {};
@@ -225,20 +225,20 @@ export default function PlatformConsole() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-gray-50">
+      <header className="border-b border-gray-200 bg-surface">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-6 py-3.5">
           <div className="w-9 h-9 rounded-[10px] bg-slate2-deep flex items-center justify-center text-white">
             <QCLogo className="w-[21px] h-[21px]" />
           </div>
           <div className="leading-tight">
-            <div className="font-display text-[15px] font-bold text-slate-900">QualChek</div>
-            <div className="text-[11px] text-slate-400">Operator console</div>
+            <div className="font-display text-[15px] font-bold text-gray-900">QualChek</div>
+            <div className="text-[11px] text-gray-400">Operator console</div>
           </div>
-          <div className="ml-auto flex items-center gap-3 text-[13px] text-slate-500">
+          <div className="ml-auto flex items-center gap-3 text-[13px] text-gray-500">
             {operator.name}
             <button onClick={() => { writeToken(null); setOperator(null); }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12.5px] font-semibold text-slate-600 hover:border-slate-300">
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[12.5px] font-semibold text-gray-600 hover:border-gray-300">
               <LogOut className="w-3.5 h-3.5" />Sign out
             </button>
           </div>
@@ -246,8 +246,8 @@ export default function PlatformConsole() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-7">
-        <h1 className="font-display text-[22px] font-extrabold tracking-[-0.02em] text-slate-900">Trial requests</h1>
-        <p className="mt-1 text-[13.5px] text-slate-500">
+        <h1 className="font-display text-[22px] font-extrabold tracking-[-0.02em] text-gray-900">Trial requests</h1>
+        <p className="mt-1 text-[13.5px] text-gray-500">
           Approving provisions the workspace, its first admin, and a 14-day trial.
         </p>
 
@@ -300,7 +300,7 @@ export default function PlatformConsole() {
           {tabs.map(([key, label, n]) => (
             <button key={key} onClick={() => setFilter(key)}
                     className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                      filter === key ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
+                      filter === key ? 'bg-gray-900 text-white' : 'bg-surface border border-gray-200 text-gray-600 hover:border-gray-300'
                     }`}>
               {label}{n != null && Number(n) > 0 && <span className="ml-1.5 opacity-60">{n}</span>}
             </button>
@@ -309,9 +309,9 @@ export default function PlatformConsole() {
 
         <div className="mt-5 space-y-3">
           {data.requests.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-              <p className="text-[14px] font-semibold text-slate-700">Nothing here</p>
-              <p className="mt-1 text-[13px] text-slate-400">
+            <div className="rounded-xl border border-dashed border-gray-200 bg-surface px-6 py-12 text-center">
+              <p className="text-[14px] font-semibold text-gray-700">Nothing here</p>
+              <p className="mt-1 text-[13px] text-gray-400">
                 {filter === 'pending' ? 'No requests are waiting for a decision.' : 'No requests match this filter.'}
               </p>
             </div>

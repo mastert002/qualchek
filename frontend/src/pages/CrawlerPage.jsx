@@ -176,7 +176,7 @@ export default function CrawlerPage() {
               disabled={isRunning}
             />
             {showHistory && urlHistory.length > 0 && (
-              <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <div className="absolute z-20 left-0 right-0 mt-1 bg-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden">
                 <div className="px-3 py-1.5 text-xs text-gray-400 font-medium border-b border-gray-100">Recent URLs</div>
                 {urlHistory
                   .filter(u => !url || u.toLowerCase().includes(url.toLowerCase()))
@@ -426,7 +426,7 @@ export default function CrawlerPage() {
           onClick={() => setLightbox(null)}
         >
           <div
-            className="bg-white rounded-xl overflow-hidden shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col"
+            className="bg-surface rounded-xl overflow-hidden shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">

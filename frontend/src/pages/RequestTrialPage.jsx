@@ -53,7 +53,7 @@ export default function RequestTrialPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-white">
+    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-surface">
       {/* ---------------- left: the pitch ---------------------------------- */}
       <div className="relative hidden lg:flex flex-col justify-start overflow-hidden bg-slate2-deep px-12 py-12 text-white">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -62,7 +62,7 @@ export default function RequestTrialPage() {
              style={{ background: 'radial-gradient(circle, rgba(25,166,153,0.26) 0%, rgba(0,0,0,0) 70%)' }} />
 
         <div className="relative flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[11px] bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-white/85">
+          <div className="w-10 h-10 rounded-[11px] bg-surface/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-white/85">
             <QCLogo className="w-[24px] h-[24px]" />
           </div>
           <div className="leading-tight">
@@ -98,7 +98,7 @@ export default function RequestTrialPage() {
           {plans.length > 0 && (
             <div className="mt-10 flex gap-2">
               {plans.map(p => (
-                <div key={p.code} className="flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
+                <div key={p.code} className="flex-1 rounded-lg border border-white/10 bg-surface/[0.04] px-3 py-2.5">
                   <div className="font-display text-[17px] font-bold">{money(p)}<span className="text-[11px] font-normal text-white/40">/mo</span></div>
                   <div className="text-[11px] text-white/45">up to {p.max_users} people</div>
                 </div>
@@ -120,15 +120,15 @@ export default function RequestTrialPage() {
               <div className="w-12 h-12 rounded-full bg-pass-50 border border-pass-500/25 flex items-center justify-center">
                 <Check className="w-6 h-6 text-pass-500" />
               </div>
-              <h2 className="mt-5 font-display text-[26px] font-extrabold tracking-[-0.03em] text-slate-900">
+              <h2 className="mt-5 font-display text-[26px] font-extrabold tracking-[-0.03em] text-gray-900">
                 Request received
               </h2>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-slate-600">
+              <p className="mt-3 text-[14.5px] leading-relaxed text-gray-600">
                 Thanks — we have your details. A member of the QualChek team reviews each
-                request, and you&rsquo;ll get an email at <span className="font-semibold text-slate-800">{form.email}</span>{' '}
+                request, and you&rsquo;ll get an email at <span className="font-semibold text-gray-800">{form.email}</span>{' '}
                 once your workspace is ready.
               </p>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-slate-600">
+              <p className="mt-3 text-[14.5px] leading-relaxed text-gray-600">
                 You&rsquo;ll sign in with the password you just chose — there&rsquo;s nothing
                 else to set up.
               </p>
@@ -138,10 +138,10 @@ export default function RequestTrialPage() {
             </div>
           ) : (
             <>
-              <h2 className="font-display text-[26px] font-extrabold tracking-[-0.03em] text-slate-900">
+              <h2 className="font-display text-[26px] font-extrabold tracking-[-0.03em] text-gray-900">
                 Request a trial
               </h2>
-              <p className="mt-1.5 text-[14px] text-slate-500">
+              <p className="mt-1.5 text-[14px] text-gray-500">
                 14 days free. We review each request and set your workspace up for you.
               </p>
 
@@ -153,7 +153,7 @@ export default function RequestTrialPage() {
 
               <form onSubmit={submit} className="mt-6 space-y-4">
                 <div>
-                  <label htmlFor="workspace" className="block text-[13px] font-semibold text-slate-700 mb-1.5">
+                  <label htmlFor="workspace" className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                     Company or team name
                   </label>
                   <input id="workspace" className="input" required autoFocus
@@ -162,24 +162,24 @@ export default function RequestTrialPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="name" className="block text-[13px] font-semibold text-slate-700 mb-1.5">Your name</label>
+                    <label htmlFor="name" className="block text-[13px] font-semibold text-gray-700 mb-1.5">Your name</label>
                     <input id="name" className="input" required value={form.name} onChange={set('name')} />
                   </div>
                   <div>
-                    <label htmlFor="phone" className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                      Phone <span className="font-normal text-slate-400">(optional)</span>
+                    <label htmlFor="phone" className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                      Phone <span className="font-normal text-gray-400">(optional)</span>
                     </label>
                     <input id="phone" className="input" value={form.phone} onChange={set('phone')} />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-[13px] font-semibold text-slate-700 mb-1.5">Work email</label>
+                  <label htmlFor="email" className="block text-[13px] font-semibold text-gray-700 mb-1.5">Work email</label>
                   <input id="email" type="email" className="input" required value={form.email} onChange={set('email')} />
                 </div>
 
                 <div>
-                  <span className="block text-[13px] font-semibold text-slate-700 mb-1.5">Team size</span>
+                  <span className="block text-[13px] font-semibold text-gray-700 mb-1.5">Team size</span>
                   <div className="grid grid-cols-3 gap-2">
                     {plans.map(p => (
                       <button
@@ -189,33 +189,33 @@ export default function RequestTrialPage() {
                         className={`rounded-lg border px-3 py-2.5 text-left transition-colors ${
                           form.plan_code === p.code
                             ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600'
-                            : 'border-slate-200 hover:border-slate-300'
+                            : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
-                        <span className="block font-display text-[16px] font-bold text-slate-900">{money(p)}
-                          <span className="text-[11px] font-normal text-slate-400">/mo</span>
+                        <span className="block font-display text-[16px] font-bold text-gray-900">{money(p)}
+                          <span className="text-[11px] font-normal text-gray-400">/mo</span>
                         </span>
-                        <span className="block text-[11.5px] text-slate-500">up to {p.max_users}</span>
+                        <span className="block text-[11.5px] text-gray-500">up to {p.max_users}</span>
                       </button>
                     ))}
                   </div>
-                  <p className="mt-1 text-[11.5px] text-slate-400">Billing starts only if you continue after the trial.</p>
+                  <p className="mt-1 text-[11.5px] text-gray-400">Billing starts only if you continue after the trial.</p>
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-[13px] font-semibold text-slate-700 mb-1.5">
+                  <label htmlFor="password" className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                     Choose a password
                   </label>
                   <PasswordInput id="password" required minLength={8}
                                  value={form.password} onChange={set('password')} />
-                  <p className="mt-1 text-[11.5px] text-slate-400">
+                  <p className="mt-1 text-[11.5px] text-gray-400">
                     At least 8 characters. You&rsquo;ll use this to sign in once approved.
                   </p>
                 </div>
 
                 <div>
-                  <label htmlFor="note" className="block text-[13px] font-semibold text-slate-700 mb-1.5">
-                    Anything we should know? <span className="font-normal text-slate-400">(optional)</span>
+                  <label htmlFor="note" className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                    Anything we should know? <span className="font-normal text-gray-400">(optional)</span>
                   </label>
                   <textarea id="note" rows={2} className="input resize-none"
                             value={form.note} onChange={set('note')} />
@@ -227,12 +227,12 @@ export default function RequestTrialPage() {
                 </button>
               </form>
 
-              <p className="mt-6 text-center text-[13.5px] text-slate-500">
+              <p className="mt-6 text-center text-[13.5px] text-gray-500">
                 Already approved?{' '}
                 <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700">Sign in</Link>
               </p>
 
-              <p className="mt-7 flex items-start gap-2 text-[11.5px] leading-relaxed text-slate-400">
+              <p className="mt-7 flex items-start gap-2 text-[11.5px] leading-relaxed text-gray-400">
                 <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
                 <span>
                   Each workspace is isolated at the database level. When a trial ends nothing is
