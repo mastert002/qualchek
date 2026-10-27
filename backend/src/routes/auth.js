@@ -325,6 +325,12 @@ router.post('/invite/accept', async (req, res) => {
     // redeemed after a forgotten password should not leave an older session,
     // possibly someone else's, still running.
     await refresh.revokeAllForUser(fresh.id);
+    // A reset ends every session and signs nobody in: the person goes to the
+    // sign-in page and uses the new password there. An invite still signs the
+    // new account straight in.
+    if (user.purpose === 'reset') {
+      return res.json({ ok: true, mode: 'reset', email: fresh.email });
+    }
     setSessionCookie(req, res, await refresh.issue(fresh.id));
     res.json({ user: fresh, token: signToken(fresh) });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Internal server error' }); }

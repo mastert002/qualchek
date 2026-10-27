@@ -128,6 +128,8 @@ export default function TestCasesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showSuite, setShowSuite] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  // The cases the export modal works on: the bulk selection, or one case from its badge.
+  const [exportIds, setExportIds] = useState([]);
   const [showImport, setShowImport] = useState(false);
   const [suiteName, setSuiteName] = useState('');
   const [editSuite, setEditSuite] = useState(null);
@@ -294,7 +296,7 @@ export default function TestCasesPage() {
           <div className="flex-1" />
           <button onClick={() => setSelected([])} className="btn-ghost text-sm py-1">Clear</button>
           <button
-            onClick={() => setShowExport(true)}
+            onClick={() => { setExportIds(selected); setShowExport(true); }}
             className="btn-secondary text-sm py-1"
           >
             <Code2 className="w-4 h-4" />
@@ -376,10 +378,15 @@ export default function TestCasesPage() {
                   </td>
                   <td className="p-3 hidden md:table-cell">
                     {tc.automation_status === 'automated' ? (
-                      <span className="badge bg-purple-50 text-purple-700 text-xs flex items-center gap-1 w-fit">
+                      <button
+                        type="button"
+                        onClick={() => { setExportIds([tc.id]); setShowExport(true); }}
+                        title="Open the automation script for this test case"
+                        className="badge bg-purple-50 text-purple-700 hover:bg-purple-100 text-xs flex items-center gap-1 w-fit"
+                      >
                         <Code2 className="w-3 h-3" />
                         {tc.automation_framework || 'automated'}
-                      </span>
+                      </button>
                     ) : (
                       <span className="text-xs text-gray-400">manual</span>
                     )}
@@ -452,7 +459,7 @@ export default function TestCasesPage() {
       {showExport && (
         <ExportScriptsModal
           projectId={projectId}
-          selectedIds={selected}
+          selectedIds={exportIds}
           allCases={cases}
           onClose={() => setShowExport(false)}
         />

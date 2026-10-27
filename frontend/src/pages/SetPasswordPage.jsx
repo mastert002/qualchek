@@ -18,6 +18,7 @@ export default function SetPasswordPage() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   // Validate before showing the form, so a dead link says so immediately
   // rather than after the user has chosen a password.
@@ -42,6 +43,12 @@ export default function SetPasswordPage() {
     setSaving(true);
     try {
       const { data } = await api.post('/auth/invite/accept', { token, password });
+      if (data.mode === 'reset') {
+        // A reset signs nobody in. Show confirmation and point to sign-in.
+        setResetDone(true);
+        setSaving(false);
+        return;
+      }
       setToken(data.token);
       // Full navigation rather than client-side routing: it remounts
       // AuthProvider, which reads the new token and loads the session cleanly.
@@ -86,7 +93,18 @@ export default function SetPasswordPage() {
           </div>
         )}
 
-        {!checking && invitee && (
+        {resetDone && (
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg p-3 mb-4 text-sm">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span>Your password has been reset.</span>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">Sign in with your new password.</p>
+            <Link to="/login" className="btn-primary w-full justify-center py-2.5">Go to sign in</Link>
+          </div>
+        )}
+
+        {!checking && invitee && !resetDone && (
           <>
             <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg p-3 mb-4 text-sm">
               <CheckCircle className="w-4 h-4 flex-shrink-0" />
