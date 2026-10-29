@@ -132,7 +132,8 @@
   --gray-700: 55 65 81;
   --gray-800: 31 41 55;
   --gray-900: 17 24 39;
-  --surface: 255 255 255;
+  /* A soft grey panel; the input fields stay white so they still stand out. */
+  --surface: 244 246 249;
   --brand-50: 238 251 248;
   color-scheme: light;
 }
