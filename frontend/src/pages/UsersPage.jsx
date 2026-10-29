@@ -9,7 +9,7 @@ import { useRole } from '../hooks/useRole';
 import { Navigate } from 'react-router-dom';
 
 const ROLE_COLORS = {
-  admin:  'bg-purple-100 text-purple-700',
+  admin:  'bg-indigo2-100 text-indigo2-700',
   tester: 'bg-brand-100 text-brand-700',
   viewer: 'bg-gray-100 text-gray-700',
 };
@@ -239,7 +239,7 @@ export default function UsersPage() {
   // (see projects.js), so a picker there would be misleading — explain instead.
   const projectPicker = () => {
     if (form.role === 'admin') return (
-      <div className="flex gap-2 rounded-lg bg-purple-50 border border-purple-200 p-3 text-sm text-purple-800">
+      <div className="flex gap-2 rounded-lg bg-indigo2-50 border border-indigo2-100 p-3 text-sm text-indigo2-700">
         <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <span>Admins have full access to every project. Nothing to assign.</span>
       </div>
