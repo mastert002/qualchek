@@ -12,7 +12,7 @@ export default function Modal({ title, onClose, children, size = 'md' }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className={`bg-surface rounded-xl shadow-xl w-full ${sizes[size]} max-h-[90vh] flex flex-col`}>
+      <div className={`form-panel bg-surface rounded-xl shadow-xl w-full ${sizes[size]} max-h-[90vh] flex flex-col`}>
         <div className="flex items-center justify-between p-5 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
