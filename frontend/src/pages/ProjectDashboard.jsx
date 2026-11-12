@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { ListChecks, PlayCircle, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { ListChecks, PlayCircle, CheckCircle, XCircle, Clock, AlertTriangle, Pencil } from 'lucide-react';
+import EditProjectModal from '../components/EditProjectModal';
+import { useRole } from '../hooks/useRole';
 import api from '../utils/api';
 import { fmtDate, passRate } from '../utils/helpers';
 
@@ -29,6 +32,8 @@ function StatCard({ label, value, icon, color = 'blue', sub }) {
 
 export default function ProjectDashboard() {
   const { projectId } = useParams();
+  const { canManage } = useRole();
+  const [editing, setEditing] = useState(false);
 
   const { data: report, isLoading } = useQuery({
     queryKey: ['report', projectId],
@@ -69,10 +74,18 @@ export default function ProjectDashboard() {
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">{project?.name}</h1>
-        <p className="text-gray-500">{project?.description}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900">{project?.name}</h1>
+          <p className="text-gray-500">{project?.description}</p>
+        </div>
+        {canManage && project && (
+          <button onClick={() => setEditing(true)} className="btn-secondary text-sm py-1.5 flex-shrink-0">
+            <Pencil className="w-4 h-4" /> Edit project
+          </button>
+        )}
       </div>
+      {editing && project && <EditProjectModal project={project} onClose={() => setEditing(false)} />}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Test Cases" value={tc.total || 0} icon={<ListChecks className="w-5 h-5" />} color="blue" />
