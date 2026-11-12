@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, FolderKanban, ListChecks, PlayCircle, Trash2 } from 'lucide-react';
+import { Plus, FolderKanban, ListChecks, PlayCircle, Trash2, Pencil } from 'lucide-react';
+import EditProjectModal from '../components/EditProjectModal';
 import api from '../utils/api';
 import Modal from '../components/Modal';
 import { fmtDate } from '../utils/helpers';
@@ -9,7 +10,7 @@ import { useRole } from '../hooks/useRole';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../components/ConfirmDialog';
 
-function ProjectCard({ project, onDelete }) {
+function ProjectCard({ project, onEdit, onDelete }) {
   const navigate = useNavigate();
   return (
     <div
@@ -20,14 +21,26 @@ function ProjectCard({ project, onDelete }) {
         <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
           <FolderKanban className="w-5 h-5 text-brand-600" />
         </div>
-        {onDelete && (
-          <button
-            onClick={e => { e.stopPropagation(); onDelete(project.id); }}
-            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 transition-all"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {onEdit && (
+            <button
+              onClick={e => { e.stopPropagation(); onEdit(project); }}
+              title="Edit project"
+              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-brand-600 p-1 transition-all"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={e => { e.stopPropagation(); onDelete(project.id); }}
+              title="Delete project"
+              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
       <h3 className="font-semibold text-gray-900 mb-1">{project.name}</h3>
       <p className="text-sm text-gray-500 mb-4 line-clamp-2">{project.description || 'No description'}</p>
@@ -48,6 +61,7 @@ function ProjectCard({ project, onDelete }) {
 
 export default function ProjectsPage() {
   const [showCreate, setShowCreate] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
   const [form, setForm] = useState({ name: '', description: '' });
   const qc = useQueryClient();
   const { canManage } = useRole();
@@ -113,6 +127,7 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map(p => (
             <ProjectCard key={p.id} project={p}
+              onEdit={canManage ? setEditingProject : null}
               onDelete={canManage ? async id => {
                 const ok = await confirm({ title: 'Delete Project', message: 'This will permanently delete all test cases and runs in this project. Are you sure?', confirmLabel: 'Delete Project', variant: 'danger' });
                 if (ok) deleteMutation.mutate(id);
@@ -120,6 +135,10 @@ export default function ProjectsPage() {
             />
           ))}
         </div>
+      )}
+
+      {editingProject && (
+        <EditProjectModal project={editingProject} onClose={() => setEditingProject(null)} />
       )}
 
       {showCreate && (
