@@ -138,9 +138,10 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <TrialBanner />
       <Sidebar projectId={projectId} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col lg:ml-64 min-w-0">
+        {/* Inside the content column, so it sits above the page and not beside it. */}
+        <TrialBanner />
         <header className="bg-surface border-b border-gray-200 px-4 py-3 lg:hidden flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)} className="text-gray-500">
             <Menu className="w-5 h-5" />
