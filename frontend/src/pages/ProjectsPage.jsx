@@ -64,7 +64,7 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState(null);
   const [form, setForm] = useState({ name: '', description: '' });
   const qc = useQueryClient();
-  const { canManage } = useRole();
+  const { canManage, canCreate } = useRole();
   const toast = useToast();
   const { confirm } = useConfirm();
 
@@ -97,7 +97,7 @@ export default function ProjectsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
           <p className="text-gray-500 mt-1">Manage your test projects</p>
         </div>
-        {canManage && (
+        {canCreate && (
           <button onClick={() => setShowCreate(true)} className="btn-primary">
             <Plus className="w-4 h-4" /> New Project
           </button>

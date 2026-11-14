@@ -55,7 +55,7 @@ const DEFAULT_SUITES = [
 
 router.post('/', async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can create projects' });
+    if (req.user.role !== 'admin' && req.user.role !== 'tester') return res.status(403).json({ error: 'Only admins and testers can create projects' });
     const { name, description } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
     const db = getDb();
