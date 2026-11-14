@@ -14,7 +14,7 @@ export default function TestCaseDetail() {
   const { projectId, caseId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isViewer } = useRole();
+  const { isViewer, canDeleteCase } = useRole();
   const qc = useQueryClient();
   const toast = useToast();
   const { confirm } = useConfirm();
@@ -84,7 +84,7 @@ export default function TestCaseDetail() {
             <Edit2 className="w-4 h-4" /> Edit
           </button>
         )}
-        {!isViewer && (
+        {!isViewer && canDeleteCase(tc) && (
           <button onClick={async () => { const ok = await confirm({ title: 'Delete Test Case', message: `Delete "${tc.title}"? This cannot be undone.`, confirmLabel: 'Delete', variant: 'danger' }); if (ok) deleteMutation.mutate(); }} className="btn-danger">
             <Trash2 className="w-4 h-4" />
           </button>

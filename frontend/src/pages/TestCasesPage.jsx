@@ -139,7 +139,7 @@ export default function TestCasesPage() {
   const [filters, setFilters] = useState({ search: '', priority: '', status: '', suite_id: '' });
   const [selected, setSelected] = useState([]);
   const qc = useQueryClient();
-  const { canCreate, canDelete, canManage, isViewer } = useRole();
+  const { canCreate, canDelete, canDeleteCase, canManage, isViewer } = useRole();
   const toast = useToast();
   const { user } = useAuth();
   const [generatingWord, setGeneratingWord] = useState(false);
@@ -255,10 +255,14 @@ export default function TestCasesPage() {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: ids => api.delete(`/projects/${projectId}/test-cases`, { data: { ids } }),
-    onSuccess: (_, ids) => {
+    onSuccess: (res) => {
       qc.invalidateQueries(['test-cases', projectId]);
       setSelected([]);
-      toast.success(`${ids.length} test case${ids.length !== 1 ? 's' : ''} deleted`);
+      const { deleted = 0, skipped = [] } = res.data || {};
+      toast.success(`${deleted} test case${deleted !== 1 ? 's' : ''} deleted`);
+      if (skipped.length) {
+        toast.warning(`${skipped.length} left in place: only a super admin can delete a test case another admin created.`, 'Not deleted');
+      }
     },
     onError: err => toast.error(err.response?.data?.error || 'Failed to delete'),
   });
@@ -459,7 +463,7 @@ export default function TestCasesPage() {
                   </td>
                   <td className="p-3 text-gray-500 hidden md:table-cell">{fmtDate(tc.created_at)}</td>
                   <td className="p-3">
-                    {canDelete && (
+                    {canDeleteCase(tc) && (
                       <button onClick={async () => {
                         const ok = await confirm({ title: 'Delete Test Case', message: `Delete "${tc.title}"? This cannot be undone.`, confirmLabel: 'Delete', variant: 'danger' });
                         if (ok) deleteMutation.mutate(tc.id);

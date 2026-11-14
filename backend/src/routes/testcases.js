@@ -9,6 +9,23 @@ const { commentOnLinkedIssue } = require('../lib/jira');
 
 const router = express.Router({ mergeParams: true });
 router.use(authenticate);
+
+// Who may delete a test case. A super admin may delete any case. An admin may
+// delete a case they created, or one created by someone who is not an admin,
+// but never one another admin created.
+async function mayDeleteCase(db, user, tc) {
+  if (user.is_super_admin) return true;
+  if (user.role !== 'admin') return false;
+  if (tc.created_by === user.id) return true;
+  const creator = await db.prepare('SELECT role, is_super_admin FROM users WHERE id = ?').get(tc.created_by);
+  // No creator on record, or the creator has been removed: not another admin's case.
+  if (!creator) return true;
+  return creator.role !== 'admin' && !creator.is_super_admin;
+}
+
+function canDeleteAtAll(user) {
+  return user.role === 'admin' || !!user.is_super_admin;
+}
 // The project in the URL must belong to this workspace. Reads are already
 // scoped by the policies; this closes writes naming a foreign project id.
 router.use(requireProject);
@@ -18,7 +35,7 @@ router.get('/', async (req, res) => {
     const db = getDb();
     const { suite_id, priority, status, search, automation_status } = req.query;
     let query = `
-      SELECT tc.*, u.name as creator_name, ts.name as suite_name, jl.issue_key as jira_issue_key
+      SELECT tc.*, u.name as creator_name, u.role as creator_role, ts.name as suite_name, jl.issue_key as jira_issue_key
       FROM test_cases tc
       LEFT JOIN users u ON tc.created_by = u.id
       LEFT JOIN test_suites ts ON tc.suite_id = ts.id
@@ -138,7 +155,7 @@ router.get('/:id', async (req, res) => {
   try {
     const db = getDb();
     const tc = await db.prepare(`
-      SELECT tc.*, u.name as creator_name, ts.name as suite_name
+      SELECT tc.*, u.name as creator_name, u.role as creator_role, ts.name as suite_name
       FROM test_cases tc
       LEFT JOIN users u ON tc.created_by = u.id
       LEFT JOIN test_suites ts ON tc.suite_id = ts.id
@@ -184,9 +201,13 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can delete test cases' });
+    if (!canDeleteAtAll(req.user)) return res.status(403).json({ error: 'Only admins can delete test cases' });
     const db = getDb();
-    const goneCase = await db.prepare('SELECT id, title FROM test_cases WHERE id = ?').get(req.params.id);
+    const goneCase = await db.prepare('SELECT id, title, created_by FROM test_cases WHERE id = ?').get(req.params.id);
+    if (!goneCase) return res.status(404).json({ error: 'Not found' });
+    if (!(await mayDeleteCase(db, req.user, goneCase))) {
+      return res.status(403).json({ error: 'Only a super admin can delete a test case that another admin created' });
+    }
     await db.prepare('DELETE FROM test_cases WHERE id = ?').run(req.params.id);
     await audit.record(req, 'test_case.deleted', { type: 'test_case', id: req.params.id, label: goneCase ? goneCase.title : null },
       { project_id: req.params.projectId });
@@ -196,17 +217,28 @@ router.delete('/:id', async (req, res) => {
 
 router.delete('/', async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can delete test cases' });
+    if (!canDeleteAtAll(req.user)) return res.status(403).json({ error: 'Only admins can delete test cases' });
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids array is required' });
     const db = getDb();
     const placeholders = ids.map(() => '?').join(',');
-    // Capture the titles before they are gone, so the entry names what was lost.
-    const goneCases = await db.prepare(`SELECT title FROM test_cases WHERE id IN (${placeholders}) AND project_id = ?`).all(...ids, req.params.projectId);
-    await db.prepare(`DELETE FROM test_cases WHERE id IN (${placeholders}) AND project_id = ?`).run(...ids, req.params.projectId);
-    await audit.record(req, 'test_case.bulk_deleted', { type: 'test_case', label: `${ids.length} test case(s)` },
-      { project_id: req.params.projectId, count: ids.length, titles: goneCases.map(c => c.title).slice(0, 25) });
-    res.json({ deleted: ids.length });
+    const found = await db.prepare(`SELECT id, title, created_by FROM test_cases WHERE id IN (${placeholders}) AND project_id = ?`).all(...ids, req.params.projectId);
+    // Each case is judged on its own. Cases the person may not delete are left
+    // in place and reported back by title.
+    const allowed = [];
+    const skipped = [];
+    for (const tc of found) {
+      if (await mayDeleteCase(db, req.user, tc)) allowed.push(tc);
+      else skipped.push(tc.title);
+    }
+    if (allowed.length > 0) {
+      const allowedPlaceholders = allowed.map(() => '?').join(',');
+      await db.prepare(`DELETE FROM test_cases WHERE id IN (${allowedPlaceholders}) AND project_id = ?`)
+        .run(...allowed.map(c => c.id), req.params.projectId);
+      await audit.record(req, 'test_case.bulk_deleted', { type: 'test_case', label: `${allowed.length} test case(s)` },
+        { project_id: req.params.projectId, count: allowed.length, titles: allowed.map(c => c.title).slice(0, 25) });
+    }
+    res.json({ deleted: allowed.length, skipped });
   } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
