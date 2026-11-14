@@ -12,9 +12,11 @@ router.use(authenticate);
 
 // Who may delete a test case. A super admin may delete any case. An admin may
 // delete a case they created, or one created by someone who is not an admin,
-// but never one another admin created.
+// but never one another admin created. A tester may delete only the cases they
+// created. Viewers may delete nothing.
 async function mayDeleteCase(db, user, tc) {
   if (user.is_super_admin) return true;
+  if (user.role === 'tester') return tc.created_by === user.id;
   if (user.role !== 'admin') return false;
   if (tc.created_by === user.id) return true;
   const creator = await db.prepare('SELECT role, is_super_admin FROM users WHERE id = ?').get(tc.created_by);
@@ -23,8 +25,10 @@ async function mayDeleteCase(db, user, tc) {
   return creator.role !== 'admin' && !creator.is_super_admin;
 }
 
+// Whether this person may delete any test case at all; each case is still
+// checked by mayDeleteCase.
 function canDeleteAtAll(user) {
-  return user.role === 'admin' || !!user.is_super_admin;
+  return user.role === 'admin' || user.role === 'tester' || !!user.is_super_admin;
 }
 // The project in the URL must belong to this workspace. Reads are already
 // scoped by the policies; this closes writes naming a foreign project id.
