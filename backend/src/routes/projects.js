@@ -12,6 +12,19 @@ async function projectRole(db, projectId, userId) {
   return m ? m.role : null;
 }
 
+// Who may delete a project. A super admin may delete any project, and anyone may
+// delete a project they created. An admin may delete a project created by someone
+// who is not an admin, but never one another admin created. Otherwise, the admin
+// of the project may delete it, if its creator is not an admin.
+function mayDeleteProject(user, project, roleHere) {
+  if (user.is_super_admin) return true;
+  if (project.created_by === user.id) return true;
+  const creatorIsAdmin = project.creator_role === 'admin' || !!project.creator_super;
+  if (creatorIsAdmin) return false;
+  if (user.role === 'admin') return true;
+  return roleHere === 'admin';
+}
+
 router.get('/', async (req, res) => {
   try {
     const db = getDb();
@@ -19,7 +32,7 @@ router.get('/', async (req, res) => {
     console.log('[projects] GET / user:', req.user.id, 'role:', req.user.role);
     if (req.user.role === 'admin' || req.user.role === 'viewer') {
       projects = await db.prepare(`
-        SELECT p.*, u.name as creator_name,
+        SELECT p.*, u.name as creator_name, u.role as creator_role, u.is_super_admin as creator_super,
           (SELECT COUNT(*) FROM test_cases tc WHERE tc.project_id = p.id) as test_case_count,
           (SELECT COUNT(*) FROM test_runs tr WHERE tr.project_id = p.id) as test_run_count
         FROM projects p
@@ -28,7 +41,7 @@ router.get('/', async (req, res) => {
       `).all();
     } else {
       projects = await db.prepare(`
-        SELECT p.*, u.name as creator_name,
+        SELECT p.*, u.name as creator_name, u.role as creator_role, u.is_super_admin as creator_super,
           (SELECT COUNT(*) FROM test_cases tc WHERE tc.project_id = p.id) as test_case_count,
           (SELECT COUNT(*) FROM test_runs tr WHERE tr.project_id = p.id) as test_run_count
         FROM projects p
@@ -37,7 +50,11 @@ router.get('/', async (req, res) => {
         ORDER BY p.created_at DESC
       `).all(req.user.id);
     }
-    res.json(projects);
+    // Each project carries the signed-in person's own role on it, so the screens
+    // can offer edit and delete to the admin of a project they created.
+    const mine = await db.prepare('SELECT project_id, role FROM project_members WHERE user_id = ?').all(req.user.id);
+    const myRoles = Object.fromEntries(mine.map(m => [m.project_id, m.role]));
+    res.json(projects.map(p => ({ ...p, my_role: myRoles[p.id] || null })));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Internal server error' }); }
 });
 
@@ -81,7 +98,7 @@ router.get('/:id', async (req, res) => {
       const member = await db.prepare('SELECT * FROM project_members WHERE project_id = ? AND user_id = ?').get(req.params.id, req.user.id);
       if (!member) return res.status(404).json({ error: 'Project not found' });
     }
-    const project = await db.prepare(`SELECT p.*, u.name as creator_name FROM projects p JOIN users u ON p.created_by = u.id WHERE p.id = ?`).get(req.params.id);
+    const project = await db.prepare(`SELECT p.*, u.name as creator_name, u.role as creator_role, u.is_super_admin as creator_super FROM projects p JOIN users u ON p.created_by = u.id WHERE p.id = ?`).get(req.params.id);
     // Under row-level security a project belonging to another tenant is simply
     // not visible, so this is undefined rather than throwing. Spreading it
     // produced {} with a 200, which reads to the client as "an empty project
@@ -89,7 +106,8 @@ router.get('/:id', async (req, res) => {
     // the id is real.
     if (!project) return res.status(404).json({ error: 'Project not found' });
     const members = await db.prepare(`SELECT u.id, u.name, u.email, pm.role FROM project_members pm JOIN users u ON pm.user_id = u.id WHERE pm.project_id = ?`).all(req.params.id);
-    res.json({ ...project, members });
+    const mine = members.find(m => m.id === req.user.id);
+    res.json({ ...project, members, my_role: mine ? mine.role : null });
   } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
@@ -107,9 +125,15 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Only admins can delete projects' });
     const db = getDb();
-    const goneProject = await db.prepare('SELECT id, name FROM projects WHERE id = ?').get(req.params.id);
+    const target = await db.prepare(`SELECT p.id, p.name, p.created_by, u.role as creator_role, u.is_super_admin as creator_super
+      FROM projects p LEFT JOIN users u ON u.id = p.created_by WHERE p.id = ?`).get(req.params.id);
+    if (!target) return res.status(404).json({ error: 'Project not found' });
+    const roleHere = await projectRole(db, req.params.id, req.user.id);
+    if (!mayDeleteProject(req.user, target, roleHere)) {
+      return res.status(403).json({ error: 'Only a super admin can delete a project another admin created' });
+    }
+    const goneProject = target;
     await db.prepare('DELETE FROM projects WHERE id = ?').run(req.params.id);
     await audit.record(req, 'project.deleted', { type: 'project', id: req.params.id, label: goneProject ? goneProject.name : null });
     res.json({ success: true });

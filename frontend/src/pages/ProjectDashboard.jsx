@@ -79,7 +79,7 @@ export default function ProjectDashboard() {
           <h1 className="text-2xl font-bold text-gray-900">{project?.name}</h1>
           <p className="text-gray-500">{project?.description}</p>
         </div>
-        {canManage && project && (
+        {(canManage || project?.my_role === 'admin') && project && (
           <button onClick={() => setEditing(true)} className="btn-secondary text-sm py-1.5 flex-shrink-0">
             <Pencil className="w-4 h-4" /> Edit project
           </button>

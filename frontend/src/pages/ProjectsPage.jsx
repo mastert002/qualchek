@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, FolderKanban, ListChecks, PlayCircle, Trash2, Pencil } from 'lucide-react';
 import EditProjectModal from '../components/EditProjectModal';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import Modal from '../components/Modal';
 import { fmtDate } from '../utils/helpers';
@@ -64,7 +65,16 @@ export default function ProjectsPage() {
   const [editingProject, setEditingProject] = useState(null);
   const [form, setForm] = useState({ name: '', description: '' });
   const qc = useQueryClient();
-  const { canManage, canCreate } = useRole();
+  const { role, isSuperAdmin, canManage, canCreate } = useRole();
+  const { user } = useAuth();
+  // Mirrors the server: a super admin, the creator, or an admin for a project not
+  // created by another admin.
+  const canDeleteProject = p => {
+    if (isSuperAdmin) return true;
+    if (p.created_by === user?.id) return true;
+    if (p.creator_role === 'admin' || p.creator_super) return false;
+    return role === 'admin' || p.my_role === 'admin';
+  };
   const toast = useToast();
   const { confirm } = useConfirm();
 
@@ -127,8 +137,8 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map(p => (
             <ProjectCard key={p.id} project={p}
-              onEdit={canManage ? setEditingProject : null}
-              onDelete={canManage ? async id => {
+              onEdit={canManage || p.my_role === 'admin' ? setEditingProject : null}
+              onDelete={canDeleteProject(p) ? async id => {
                 const ok = await confirm({ title: 'Delete Project', message: 'This will permanently delete all test cases and runs in this project. Are you sure?', confirmLabel: 'Delete Project', variant: 'danger' });
                 if (ok) deleteMutation.mutate(id);
               } : null}
