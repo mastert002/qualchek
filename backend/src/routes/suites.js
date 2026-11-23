@@ -37,7 +37,10 @@ router.put('/:id', async (req, res) => {
   try {
     const { name, description, parent_id } = req.body;
     const db = getDb();
-    await db.prepare('UPDATE test_suites SET name = ?, description = ?, parent_id = ? WHERE id = ?').run(name, description || null, parent_id || null, req.params.id);
+    // A suite is only changed through its own project, never another one.
+    const suite = await db.prepare('SELECT id FROM test_suites WHERE id = ? AND project_id = ?').get(req.params.id, req.params.projectId);
+    if (!suite) return res.status(404).json({ error: 'Suite not found in this project' });
+    await db.prepare('UPDATE test_suites SET name = ?, description = ?, parent_id = ? WHERE id = ? AND project_id = ?').run(name, description || null, parent_id || null, req.params.id, req.params.projectId);
     res.json(await db.prepare('SELECT * FROM test_suites WHERE id = ?').get(req.params.id));
   } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
 });
@@ -45,8 +48,9 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const db = getDb();
-    const goneSuite = await db.prepare('SELECT id, name FROM test_suites WHERE id = ?').get(req.params.id);
-    await db.prepare('DELETE FROM test_suites WHERE id = ?').run(req.params.id);
+    const goneSuite = await db.prepare('SELECT id, name FROM test_suites WHERE id = ? AND project_id = ?').get(req.params.id, req.params.projectId);
+    if (!goneSuite) return res.status(404).json({ error: 'Suite not found in this project' });
+    await db.prepare('DELETE FROM test_suites WHERE id = ? AND project_id = ?').run(req.params.id, req.params.projectId);
     await audit.record(req, 'suite.deleted', { type: 'suite', id: req.params.id, label: goneSuite ? goneSuite.name : null },
       { project_id: req.params.projectId });
     res.json({ success: true });

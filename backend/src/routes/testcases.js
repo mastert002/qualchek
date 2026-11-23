@@ -10,6 +10,13 @@ const { commentOnLinkedIssue } = require('../lib/jira');
 const router = express.Router({ mergeParams: true });
 router.use(authenticate);
 
+// A suite can only be used by test cases in the same project.
+async function suiteInProject(db, suiteId, projectId) {
+  if (!suiteId) return true;
+  const suite = await db.prepare('SELECT id FROM test_suites WHERE id = ? AND project_id = ?').get(suiteId, projectId);
+  return !!suite;
+}
+
 // Who may delete a test case. A super admin may delete any case. An admin may
 // delete a case they created, or one created by someone who is not an admin,
 // but never one another admin created. A tester may delete only the cases they
@@ -142,6 +149,7 @@ router.post('/', async (req, res) => {
       automation_status = 'manual', automation_framework, script_path } = req.body;
     if (!title) return res.status(400).json({ error: 'title is required' });
     const db = getDb();
+    if (!(await suiteInProject(db, suite_id, req.params.projectId))) return res.status(400).json({ error: 'That suite is not in this project' });
     const id = uuidv4();
     const now = nowISO();
     await db.prepare(`
@@ -176,6 +184,26 @@ router.get('/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
+// Move several test cases to a suite of this project, or to no suite.
+router.put('/bulk-suite', async (req, res) => {
+  try {
+    if (req.user.role === 'viewer') return res.status(403).json({ error: 'Viewers cannot edit test cases' });
+    const { ids, suite_id } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'ids array is required' });
+    const db = getDb();
+    if (!(await suiteInProject(db, suite_id, req.params.projectId))) return res.status(400).json({ error: 'That suite is not in this project' });
+    const placeholders = ids.map(() => '?').join(',');
+    const inProject = await db.prepare(`SELECT id FROM test_cases WHERE id IN (${placeholders}) AND project_id = ?`).all(...ids, req.params.projectId);
+    const movable = inProject.map(r => r.id);
+    if (movable.length > 0) {
+      const movePlaceholders = movable.map(() => '?').join(',');
+      await db.prepare(`UPDATE test_cases SET suite_id = ?, updated_at = ? WHERE id IN (${movePlaceholders}) AND project_id = ?`)
+        .run(suite_id || null, nowISO(), ...movable, req.params.projectId);
+    }
+    res.json({ moved: movable.length });
+  } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
+});
+
 router.put('/:id', async (req, res) => {
   try {
     if (req.user.role === 'viewer') return res.status(403).json({ error: 'Viewers cannot edit test cases' });
@@ -184,6 +212,7 @@ router.put('/:id', async (req, res) => {
     const db = getDb();
     const existing = await db.prepare('SELECT * FROM test_cases WHERE id = ?').get(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Not found' });
+    if (!(await suiteInProject(db, suite_id, req.params.projectId))) return res.status(400).json({ error: 'That suite is not in this project' });
     await db.prepare(`
       UPDATE test_cases SET suite_id=?, title=?, description=?, preconditions=?, steps=?,
       expected_result=?, priority=?, status=?, tags=?, automation_status=?, automation_framework=?,

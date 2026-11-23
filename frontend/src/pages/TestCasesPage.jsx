@@ -138,6 +138,7 @@ export default function TestCasesPage() {
   const [editSuite, setEditSuite] = useState(null);
   const [filters, setFilters] = useState({ search: '', priority: '', status: '', suite_id: '' });
   const [selected, setSelected] = useState([]);
+  const [moveTo, setMoveTo] = useState('');
   const qc = useQueryClient();
   const { canCreate, canDelete, canDeleteCase, canManage, isViewer } = useRole();
   const toast = useToast();
@@ -253,6 +254,21 @@ export default function TestCasesPage() {
 
   const toggleSelect = id => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
+  const moveMutation = useMutation({
+    mutationFn: () => api.put(`/projects/${projectId}/test-cases/bulk-suite`, {
+      ids: selected,
+      suite_id: moveTo === 'none' ? null : moveTo,
+    }),
+    onSuccess: res => {
+      qc.invalidateQueries(['test-cases', projectId]);
+      setSelected([]);
+      setMoveTo('');
+      const moved = res.data?.moved || 0;
+      toast.success(`${moved} test case${moved !== 1 ? 's' : ''} moved`);
+    },
+    onError: err => toast.error(err.response?.data?.error || 'Failed to move test cases'),
+  });
+
   const bulkDeleteMutation = useMutation({
     mutationFn: ids => api.delete(`/projects/${projectId}/test-cases`, { data: { ids } }),
     onSuccess: (res) => {
@@ -334,6 +350,16 @@ export default function TestCasesPage() {
         <div className="flex items-center gap-3 bg-brand-50 border border-brand-200 rounded-lg px-4 py-2.5 mb-2">
           <span className="text-sm font-medium text-brand-700">{selected.length} selected</span>
           <div className="flex-1" />
+          <select className="input w-auto text-sm py-1" value={moveTo} onChange={e => setMoveTo(e.target.value)}
+            aria-label="Move selected test cases to a suite">
+            <option value="">Move to suite…</option>
+            <option value="none">No suite</option>
+            {suites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <button onClick={() => moveMutation.mutate()} disabled={!moveTo || moveMutation.isPending}
+            className="btn-secondary text-sm py-1">
+            Move
+          </button>
           <button onClick={() => setSelected([])} className="btn-ghost text-sm py-1">Clear</button>
           <div className="relative">
             <button
