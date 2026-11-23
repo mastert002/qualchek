@@ -188,6 +188,7 @@ async function initDb() {
   const { rows: tableCheck } = await queryWithRetry(ddl, `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users' LIMIT 1`);
   if (tableCheck.length > 0) {
     console.log('DB: tables exist, skipping schema init');
+    await ddl.query('ALTER TABLE test_cases ADD COLUMN IF NOT EXISTS sort_order INTEGER');
     await assertIsolationActive(pool);
     await ddl.end();
     return _db;
@@ -661,6 +662,7 @@ async function initDb() {
   // admin would belong to no tenant, so RLS would hide everything from it
   // anyway.
   await assertIsolationActive(pool);
+  await ddl.query('ALTER TABLE test_cases ADD COLUMN IF NOT EXISTS sort_order INTEGER');
   await ddl.end();
 
   console.log('DB: schema created');

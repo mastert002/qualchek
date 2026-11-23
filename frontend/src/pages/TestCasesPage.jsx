@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Trash2, ChevronRight, FolderPlus, ListChecks, Edit2, Code2 , Upload, Download } from 'lucide-react';
+import { Plus, Search, Trash2, ChevronRight, ChevronUp, ChevronDown, GripVertical, FolderPlus, ListChecks, Edit2, Code2 , Upload, Download } from 'lucide-react';
 import api from '../utils/api';
 import { safeHttpUrl } from '../utils/url';
 import Modal from '../components/Modal';
@@ -198,7 +198,7 @@ export default function TestCasesPage() {
   const createMutation = useMutation({
     mutationFn: data => api.post(`/projects/${projectId}/test-cases`, data),
     onSuccess: () => {
-      qc.invalidateQueries(['test-cases', projectId]);
+      qc.invalidateQueries({ queryKey: ['test-cases', projectId] });
       setShowCreate(false);
       toast.success('Test case created successfully', 'Test Case Created');
     },
@@ -207,14 +207,14 @@ export default function TestCasesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: id => api.delete(`/projects/${projectId}/test-cases/${id}`),
-    onSuccess: () => { qc.invalidateQueries(['test-cases', projectId]); toast.success('Test case deleted'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-cases', projectId] }); toast.success('Test case deleted'); },
     onError: (err) => toast.error(err.response?.data?.error || 'Failed to delete test case'),
   });
 
   const createSuiteMutation = useMutation({
     mutationFn: () => api.post(`/projects/${projectId}/suites`, { name: suiteName }),
     onSuccess: () => {
-      qc.invalidateQueries(['suites', projectId]);
+      qc.invalidateQueries({ queryKey: ['suites', projectId] });
       setShowSuite(false);
       setSuiteName('');
       toast.success(`Suite "${suiteName}" created`);
@@ -225,7 +225,7 @@ export default function TestCasesPage() {
   const updateSuiteMutation = useMutation({
     mutationFn: ({ id, name, description }) => api.put(`/projects/${projectId}/suites/${id}`, { name, description }),
     onSuccess: () => {
-      qc.invalidateQueries(['suites', projectId]);
+      qc.invalidateQueries({ queryKey: ['suites', projectId] });
       setEditSuite(null);
       toast.success('Suite updated');
     },
@@ -235,8 +235,8 @@ export default function TestCasesPage() {
   const deleteSuiteMutation = useMutation({
     mutationFn: id => api.delete(`/projects/${projectId}/suites/${id}`),
     onSuccess: () => {
-      qc.invalidateQueries(['suites', projectId]);
-      qc.invalidateQueries(['test-cases', projectId]);
+      qc.invalidateQueries({ queryKey: ['suites', projectId] });
+      qc.invalidateQueries({ queryKey: ['test-cases', projectId] });
       toast.success('Suite deleted');
     },
     onError: (err) => toast.error(err.response?.data?.error || 'Failed to delete suite'),
@@ -254,13 +254,64 @@ export default function TestCasesPage() {
 
   const toggleSelect = id => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
+  // Reordering moves a case past its neighbour in the whole project list, so the
+  // arrows are only shown when nothing is filtered: then the neighbour is on screen.
+  const reorderable = !filters.search && !filters.priority && !filters.status && !filters.suite_id;
+  const [dragId, setDragId] = useState(null);
+  const [dropIndex, setDropIndex] = useState(null);
+
+  // Show a new order straight away; the server confirms it in the background.
+  const showOrder = ids => qc.setQueriesData({ queryKey: ['test-cases', projectId] }, old => {
+    if (!Array.isArray(old)) return old;
+    const byId = new Map(old.map(c => [c.id, c]));
+    const reordered = ids.map(id => byId.get(id)).filter(Boolean);
+    return [...reordered, ...old.filter(c => !ids.includes(c.id))];
+  });
+  const reloadCases = () => qc.invalidateQueries({ queryKey: ['test-cases', projectId] });
+
+  const reorderMutation = useMutation({
+    mutationFn: ids => api.put(`/projects/${projectId}/test-cases/reorder`, { ids }),
+    onMutate: async ids => { await qc.cancelQueries({ queryKey: ['test-cases', projectId] }); showOrder(ids); },
+    onSuccess: reloadCases,
+    onError: err => { toast.error(err.response?.data?.error || 'Could not reorder test cases'); reloadCases(); },
+  });
+
+  // Dropping a row on another moves the dragged case to that position: down the
+  // list it lands after the row it was dropped on, up the list before it.
+  const handleDrop = targetIdx => {
+    const ids = cases.map(c => c.id);
+    const from = ids.indexOf(dragId);
+    setDragId(null);
+    setDropIndex(null);
+    if (from === -1 || from === targetIdx) return;
+    ids.splice(from, 1);
+    ids.splice(targetIdx, 0, dragId);
+    reorderMutation.mutate(ids);
+  };
+
+  const moveCaseMutation = useMutation({
+    mutationFn: ({ id, direction }) => api.put(`/projects/${projectId}/test-cases/${id}/move`, { direction }),
+    onMutate: async ({ id, direction }) => {
+      await qc.cancelQueries({ queryKey: ['test-cases', projectId] });
+      const ids = cases.map(c => c.id);
+      const i = ids.indexOf(id);
+      const t = direction === 'up' ? i - 1 : i + 1;
+      if (i !== -1 && t >= 0 && t < ids.length) {
+        [ids[i], ids[t]] = [ids[t], ids[i]];
+        showOrder(ids);
+      }
+    },
+    onSuccess: reloadCases,
+    onError: err => { toast.error(err.response?.data?.error || 'Could not move this test case'); reloadCases(); },
+  });
+
   const moveMutation = useMutation({
     mutationFn: () => api.put(`/projects/${projectId}/test-cases/bulk-suite`, {
       ids: selected,
       suite_id: moveTo === 'none' ? null : moveTo,
     }),
     onSuccess: res => {
-      qc.invalidateQueries(['test-cases', projectId]);
+      qc.invalidateQueries({ queryKey: ['test-cases', projectId] });
       setSelected([]);
       setMoveTo('');
       const moved = res.data?.moved || 0;
@@ -272,7 +323,7 @@ export default function TestCasesPage() {
   const bulkDeleteMutation = useMutation({
     mutationFn: ids => api.delete(`/projects/${projectId}/test-cases`, { data: { ids } }),
     onSuccess: (res) => {
-      qc.invalidateQueries(['test-cases', projectId]);
+      qc.invalidateQueries({ queryKey: ['test-cases', projectId] });
       setSelected([]);
       const { deleted = 0, skipped = [] } = res.data || {};
       toast.success(`${deleted} test case${deleted !== 1 ? 's' : ''} deleted`);
@@ -424,6 +475,7 @@ export default function TestCasesPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 {!isViewer && <th className="w-8 p-3"><input type="checkbox" onChange={e => setSelected(e.target.checked ? cases.map(c => c.id) : [])} /></th>}
+                {!isViewer && <th className="w-8 p-1" aria-label="Order"></th>}
                 <th className="text-left p-3 font-medium text-gray-700">Title</th>
                 <th className="text-left p-3 font-medium text-gray-700 hidden sm:table-cell">Suite</th>
                 <th className="text-left p-3 font-medium text-gray-700">Priority</th>
@@ -434,9 +486,40 @@ export default function TestCasesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {cases.map(tc => (
-                <tr key={tc.id} className="hover:bg-gray-50 group">
+              {cases.map((tc, idx) => (
+                <tr key={tc.id}
+                  className={`hover:bg-gray-50 group ${dragId && dropIndex === idx && dragId !== tc.id ? 'border-t-2 border-brand-500' : ''} ${dragId === tc.id ? 'opacity-50' : ''}`}
+                  onDragOver={e => { if (!dragId || !reorderable) return; e.preventDefault(); setDropIndex(idx); }}
+                  onDrop={e => { if (!dragId || !reorderable) return; e.preventDefault(); handleDrop(idx); }}
+                  onDragEnd={() => { setDragId(null); setDropIndex(null); }}>
                   {!isViewer && <td className="p-3"><input type="checkbox" checked={selected.includes(tc.id)} onChange={() => toggleSelect(tc.id)} /></td>}
+                  {!isViewer && (
+                    <td className="p-1 whitespace-nowrap">
+                      {reorderable && (
+                        <>
+                          <span
+                            draggable
+                            onDragStart={e => { setDragId(tc.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', tc.id); }}
+                            onDragEnd={() => { setDragId(null); setDropIndex(null); }}
+                            title="Drag to reorder"
+                            className="inline-flex items-center cursor-grab text-gray-300 hover:text-gray-500 mr-1 align-middle"
+                          >
+                            <GripVertical className="w-4 h-4" aria-hidden="true" />
+                          </span>
+                          <button onClick={() => moveCaseMutation.mutate({ id: tc.id, direction: 'up' })}
+                            disabled={idx === 0 || moveCaseMutation.isPending} title="Move up"
+                            className="text-gray-400 hover:text-brand-600 disabled:opacity-30 p-0.5">
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => moveCaseMutation.mutate({ id: tc.id, direction: 'down' })}
+                            disabled={idx === cases.length - 1 || moveCaseMutation.isPending} title="Move down"
+                            className="text-gray-400 hover:text-brand-600 disabled:opacity-30 p-0.5">
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  )}
                   <td className="p-3">
                     <Link to={`/projects/${projectId}/test-cases/${tc.id}`} className="font-medium text-gray-900 hover:text-brand-600 flex items-center gap-1">
                       {tc.title}

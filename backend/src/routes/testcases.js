@@ -59,7 +59,8 @@ router.get('/', async (req, res) => {
     if (status) { query += ' AND tc.status = ?'; params.push(status); }
     if (search) { query += ' AND tc.title ILIKE ?'; params.push(`%${search}%`); }
     if (automation_status) { query += ' AND tc.automation_status = ?'; params.push(automation_status); }
-    query += ' ORDER BY tc.created_at DESC';
+    // Cases the team has put in order come first, in that order; the rest follow, newest first.
+    query += ' ORDER BY COALESCE(tc.sort_order, 2147483647) ASC, tc.created_at DESC';
     const cases = await db.prepare(query).all(...params);
     res.json(cases.map(c => ({ ...c, steps: JSON.parse(c.steps || '[]'), tags: JSON.parse(c.tags || '[]') })));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Internal server error' }); }
@@ -181,6 +182,50 @@ router.get('/:id', async (req, res) => {
       ORDER BY c.created_at
     `).all(req.params.id);
     res.json({ ...tc, steps: JSON.parse(tc.steps), tags: JSON.parse(tc.tags), comments });
+  } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
+});
+
+// Save a whole order in one statement. One write per test case would take a
+// round trip to the database each, which is what made reordering slow.
+async function saveOrder(db, orderedIds) {
+  if (orderedIds.length === 0) return;
+  const values = orderedIds.map(() => '(?, CAST(? AS INTEGER))').join(', ');
+  const params = orderedIds.flatMap((id, i) => [id, i]);
+  await db.prepare(`UPDATE test_cases AS t SET sort_order = v.pos FROM (VALUES ${values}) AS v(id, pos) WHERE t.id = v.id`).run(...params);
+}
+
+// Move one test case a place up or down the project's list.
+router.put('/:id/move', async (req, res) => {
+  try {
+    if (req.user.role === 'viewer') return res.status(403).json({ error: 'Viewers cannot edit test cases' });
+    const { direction } = req.body;
+    if (direction !== 'up' && direction !== 'down') return res.status(400).json({ error: "direction must be 'up' or 'down'" });
+    const db = getDb();
+    const ordered = await db.prepare(`SELECT id FROM test_cases WHERE project_id = ?
+      ORDER BY COALESCE(sort_order, 2147483647) ASC, created_at DESC`).all(req.params.projectId);
+    const index = ordered.findIndex(r => r.id === req.params.id);
+    if (index === -1) return res.status(404).json({ error: 'Not found' });
+    const target = direction === 'up' ? index - 1 : index + 1;
+    const moved = target >= 0 && target < ordered.length;
+    if (moved) [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+    // Number the whole list, so every case has a definite place after a move.
+    await saveOrder(db, ordered.map(r => r.id));
+    res.json({ moved });
+  } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
+});
+
+// Set the order of the project's test cases from a dragged list. ids is the full
+// list, top first. Ids that are not in this project are ignored.
+router.put('/reorder', async (req, res) => {
+  try {
+    if (req.user.role === 'viewer') return res.status(403).json({ error: 'Viewers cannot edit test cases' });
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) return res.status(400).json({ error: 'ids array is required' });
+    const db = getDb();
+    const inProject = new Set((await db.prepare('SELECT id FROM test_cases WHERE project_id = ?').all(req.params.projectId)).map(r => r.id));
+    const movable = [...new Set(ids)].filter(id => inProject.has(id));
+    await saveOrder(db, movable);
+    res.json({ reordered: movable.length });
   } catch (err) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
